@@ -2,7 +2,7 @@
 
 client_id = "7bb25c0c9ec18bc6a3ffa03a7936c9f3"
 name = "plixi-app"
-application_url = "https://precise-afternoon-quotations-puzzles.trycloudflare.com"
+application_url = "https://plixxo-app-tvhmp.ondigitalocean.app/"
 embedded = true
 
 [build]
@@ -13,7 +13,7 @@ include_config_on_deploy = true
 api_version = "2026-04"
 
 [app_proxy]
-url = "https://precise-afternoon-quotations-puzzles.trycloudflare.com"
+url = "https://plixxo-app-tvhmp.ondigitalocean.app/"
 subpath = "/cart-api"
 prefix = "apps"
 
@@ -30,4 +30,4 @@ uri = "/webhooks/app/scopes_update"
 scopes = "write_products , write_files , write_app_proxy"
 
 [auth]
-redirect_urls = [ "https://precise-afternoon-quotations-puzzles.trycloudflare.com/api/auth" ]
+redirect_urls = [ "https://plixxo-app-tvhmp.ondigitalocean.app//api/auth" ]

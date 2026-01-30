@@ -2,7 +2,7 @@
 
 client_id = "5683f1c6f7d96655f44824596125b904"
 name = "plixxo-app"
-application_url = "https://oriental-binary-maine-toys.trycloudflare.com"
+application_url = "https://plixxo-app-tvhmp.ondigitalocean.app"
 embedded = true
 
 [build]
@@ -12,7 +12,7 @@ automatically_update_urls_on_dev = true
 api_version = "2026-04"
 
 [app_proxy]
-url = "https://oriental-binary-maine-toys.trycloudflare.com/cartApi"
+url = "https://plixxo-app-tvhmp.ondigitalocean.app/cartApi"
 subpath = "cartApi"
 prefix = "apps"
 
@@ -21,4 +21,4 @@ prefix = "apps"
 scopes = "write_products , write_files , write_app_proxy , read_publications , read_locations , write_inventory , read_inventory , write_publications"
 
 [auth]
-redirect_urls = [ "https://oriental-binary-maine-toys.trycloudflare.com/api/auth" ]
+redirect_urls = [ "https://plixxo-app-tvhmp.ondigitalocean.app/api/auth" ]
