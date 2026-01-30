@@ -11,7 +11,7 @@ let PRODUCT_ID = null; // Shopify Product ID
 
 async function loadConfiguration(productId) {
     try {
-        const response = await fetch(`https://texts-videos-know-crystal.trycloudflare.com/api/public/configurator/${productId}`);
+        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app//api/public/configurator/${productId}`);
         const data = await response.json();
 
         if (!data.success) {
@@ -30,7 +30,7 @@ async function loadConfiguration(productId) {
 
 async function calculatePrice(productId, selections, measurements, quantity) {
     try {
-        const response = await fetch(`https://texts-videos-know-crystal.trycloudflare.com/api/public/calculate-price`, {
+        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app//api/public/calculate-price`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
