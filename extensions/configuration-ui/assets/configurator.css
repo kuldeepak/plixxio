@@ -980,3 +980,56 @@ label.option-card input {
 .shopify-block.shopify-app-block {
     width: 100%;
 }
+
+/* Coded by Ajay Gill */
+.vn-banner-slide {
+position: relative;
+}
+.vn-banner-slide img {
+height: 100%;
+width: 100%;
+object-fit: cover;
+object-position: center;
+min-height: 300px;
+max-height: 300px;
+}
+.vn-banner-slide-content {
+position: absolute;
+top: 20px;
+left: 20px;
+}
+.vn-banner-slide-content h1 {
+    margin: 0px 0;
+    font-size: 40px;
+    line-height: 1.4;
+    letter-spacing: 0;
+    font-weight: 800;
+    opacity: 1;
+    text-transform: capitalize;
+    color: #000 !important;
+    width: 60%;
+}
+.config-wrapper {
+padding-bottom: 40px;
+}
+@media (max-width: 900px) {
+body .vn-banner-slider-section {
+    display: none;
+}
+body .config-wrapper {
+padding-bottom: 0px;
+}
+}
+
+@media (min-width: 768px){
+.shopify-app-block .config-wrapper .config-right {
+    padding-top: 15px;
+}
+body .config-right {
+    max-width: 33.333333%;
+    position: sticky;
+    top: 81px !important;
+    height: fit-content;
+    width: 100%;
+}
+}

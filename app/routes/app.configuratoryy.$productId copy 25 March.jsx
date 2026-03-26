@@ -4,9 +4,6 @@ import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { json } from "@remix-run/node";
-import { DndContext } from "@dnd-kit/core";
-import { SortableContext, arrayMove } from "@dnd-kit/sortable";
-import { SortableItem } from "../components/SortableItem";
 // import { PrismaClient } from "@prisma/client";
 
 // const prisma = new PrismaClient();
@@ -22,11 +19,7 @@ export const loader = async ({ request, params }) => {
     include: {
       steps: {
         include: {
-          options: {
-            orderBy: {
-              order: "asc",
-            },
-          },
+          options: true,
         },
         orderBy: {
           order: "asc",
@@ -137,13 +130,6 @@ export const action = async ({ request, params }) => {
       const sku = formData.get("sku") || "";
       const showSteps = formData.get("showSteps") || null;
 
-      const maxOrderOption = await prisma.stepOption.findFirst({
-        where: { stepId },
-        orderBy: { order: "desc" },
-      });
-
-      const order = (maxOrderOption?.order || 0) + 1;
-
       const option = await prisma.stepOption.create({
         data: {
           stepId,
@@ -154,7 +140,6 @@ export const action = async ({ request, params }) => {
           price,
           sku,
           showSteps,
-          order,
         },
       });
 
@@ -212,21 +197,6 @@ export const action = async ({ request, params }) => {
       await prisma.stepOption.delete({
         where: { id: optionId },
       });
-
-      return json({ success: true });
-    }
-
-    if (actionType === "reorderOptions") {
-      const options = JSON.parse(formData.get("options"));
-
-      await Promise.all(
-        options.map((opt) =>
-          prisma.stepOption.update({
-            where: { id: opt.id },
-            data: { order: opt.order },
-          })
-        )
-      );
 
       return json({ success: true });
     }
@@ -479,28 +449,6 @@ export default function ConfigureProduct() {
       fetcher.submit(submitData, { method: "POST" });
     }
   };
-
-  const handleOptionDragEnd = (event, step) => {
-  const { active, over } = event;
-
-  if (!over || active.id === over.id) return;
-
-  const oldIndex = step.options.findIndex(o => o.id === active.id);
-  const newIndex = step.options.findIndex(o => o.id === over.id);
-
-  const newOrder = arrayMove(step.options, oldIndex, newIndex);
-
-  const formatted = newOrder.map((opt, index) => ({
-    id: opt.id,
-    order: index + 1,
-  }));
-
-  const formData = new FormData();
-  formData.append("action", "reorderOptions");
-  formData.append("options", JSON.stringify(formatted));
-
-  fetcher.submit(formData, { method: "POST" });
-};
 
   if (!product) {
     return (
@@ -1064,11 +1012,8 @@ export default function ConfigureProduct() {
                           </div>
                         ) : (
                           <s-stack direction="block" gap="tight">
-                            <DndContext onDragEnd={(e) => handleOptionDragEnd(e, step)}>
-                              <SortableContext items={step.options.map(o => o.id)}>
-                                {step.options.map((option) => (
-                                  <SortableItem key={option.id} id={option.id}>
-                                    <div
+                            {step.options.map((option, optionIndex) => (
+                              <div
                                 key={option.id}
                                 style={{
                                   padding: '16px',
@@ -1155,10 +1100,7 @@ export default function ConfigureProduct() {
                                   </div>
                                 </div>
                               </div>
-                                  </SortableItem>
-                                ))}
-                              </SortableContext>
-                            </DndContext>
+                            ))}
                           </s-stack>
                         )}
 

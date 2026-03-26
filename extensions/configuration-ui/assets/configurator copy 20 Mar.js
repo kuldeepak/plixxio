@@ -150,7 +150,7 @@ function setupPopStateHandler() {
 
 async function loadConfiguration(productId) {
     try {
-        const response = await fetch(`https://movies-drunk-happened-thehun.trycloudflare.com/api/public/configurator/${productId}?v=${Date.now()}`,
+        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app/api/public/configurator/${productId}?v=${Date.now()}`,
             {
                 cache: 'no-store', // 🚫 disable cache
             });
@@ -172,7 +172,7 @@ async function loadConfiguration(productId) {
 
 async function calculatePrice(productId, selections, measurements, quantity) {
     try {
-        const response = await fetch(`https://movies-drunk-happened-thehun.trycloudflare.com/api/public/calculate-price?v=${Date.now()}`, {
+        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app/api/public/calculate-price?v=${Date.now()}`, {
             method: 'POST',
             cache: 'no-store', // 🚫 disable cache
             headers: {
@@ -237,54 +237,8 @@ function renderDynamicSteps(config) {
     renderStepContents(config);
 }
 
-// function renderOptions(step, container) {
-//     step.options.forEach(opt => {
-//         container.insertAdjacentHTML("beforeend", `
-//         <label class="option-card">
-//           <div class="option-title">
-//             <input
-//               type="radio"
-//               name="${step.key}"
-//               value="${opt.value}"
-//             >
-//             <div class="option-title1">
-//             ${opt.label}
-//             <span class="option-price">
-//               (${opt.price > 0 ? "+" : ""}${opt.price} €)
-//             </span>
-//             </div>
-//             ${opt.description ? `<img src="https://cdn.shopify.com/extensions/019bead9-e253-7ace-b99a-87365ef1f7bc/dev-f3cac707-85cf-466f-8b61-c189952e5121/assets/info.jpg" alt="Info" class="info_icon">` : ''}
-//           </div>
-  
-//           <div class="option-inner">
-//             <div class="option-text">
-//               <div class="option-description">${opt.description || ''}
-//               </div>
-//             </div>
-//             ${opt.image ? `
-//               <div class="option-image main-img">
-//                 <div class="option-zoom">
-//                   <img src="${opt.image}" alt="${opt.label}">
-//                 </div>
-//               </div>
-//             ` : ''}
-//           </div>
-//         </label>
-//       `);
-//     });
-// }
-
 function renderOptions(step, container) {
-    const sortedOptions = [...step.options]
-        .map(opt => ({
-            ...opt,
-            order: parseInt(opt.order) || 0
-        }))
-        .sort((a, b) => a.order - b.order);
-
-    console.log("Sorted:", sortedOptions); // debug
-
-    sortedOptions.forEach(opt => {
+    step.options.forEach(opt => {
         container.insertAdjacentHTML("beforeend", `
         <label class="option-card">
           <div class="option-title">
@@ -294,11 +248,26 @@ function renderOptions(step, container) {
               value="${opt.value}"
             >
             <div class="option-title1">
-              ${opt.label}
-              <span class="option-price">
-                (${opt.price > 0 ? "+" : ""}${opt.price} €)
-              </span>
+            ${opt.label}
+            <span class="option-price">
+              (${opt.price > 0 ? "+" : ""}${opt.price} €)
+            </span>
             </div>
+            ${opt.description ? `<img src="https://cdn.shopify.com/extensions/019bead9-e253-7ace-b99a-87365ef1f7bc/dev-f3cac707-85cf-466f-8b61-c189952e5121/assets/info.jpg" alt="Info" class="info_icon">` : ''}
+          </div>
+  
+          <div class="option-inner">
+            <div class="option-text">
+              <div class="option-description">${opt.description || ''}
+              </div>
+            </div>
+            ${opt.image ? `
+              <div class="option-image main-img">
+                <div class="option-zoom">
+                  <img src="${opt.image}" alt="${opt.label}">
+                </div>
+              </div>
+            ` : ''}
           </div>
         </label>
       `);
@@ -525,10 +494,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (finalStep) {
                     renderFinalStep();
                     finalStep.classList.remove("is-disabled");
-                    // finalStep.scrollIntoView({
-                    //     behavior: "smooth"
-                    // });
-                    scrollToElementWithOffset(finalStep, 100);
+                    finalStep.scrollIntoView({
+                        behavior: "smooth"
+                    });
                 }
                 return;
             }
@@ -538,10 +506,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const nextStepEl = document.querySelector(`.config-step[data-step-key="${nextKey}"]`);
             if (nextStepEl) {
-                // nextStepEl.scrollIntoView({
-                //     behavior: "smooth"
-                // });
-                scrollToElementWithOffset(nextStepEl, 100);
+                nextStepEl.scrollIntoView({
+                    behavior: "smooth"
+                });
             }
         });
     });
@@ -767,27 +734,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         img.style.transform = "scale(1)";
         img.style.transformOrigin = "center center";
     }, true);
-
-    /* =====================================================
-   SCROLL HELPER - With Offset
-===================================================== */
-    function scrollToElementWithOffset(element, offset = null) {
-        if (!element) return;
-
-        // Auto-detect header height if no offset provided
-        if (offset === null) {
-            const header = document.querySelector('header, .header, .fixed-header');
-            offset = header ? header.offsetHeight + 20 : 100;
-        }
-
-        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const targetPosition = elementPosition - offset;
-
-        window.scrollTo({
-            top: targetPosition,
-            behavior: 'smooth'
-        });
-    }
 
     function buildSummaries(config) {
         const finalTable = document.getElementById("finalSummary");

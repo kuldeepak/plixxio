@@ -101,7 +101,8 @@ model StepOption {
   
   // Relations
   step        ConfigurationStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
-  
+  order       Int?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
