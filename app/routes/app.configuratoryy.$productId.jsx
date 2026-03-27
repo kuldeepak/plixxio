@@ -555,20 +555,24 @@ const handleStepDragEnd = (event) => {
 
   return (
     <s-page heading={`Produktkonfiguration: ${product.name}`}>
+      <div style={{ marginBottom: '15px'}}>
       <s-button
         slot="secondary-action"
         onClick={() => navigate('/app/configurator')}
       >
         ← Zurück zu den Produkten
       </s-button>
-
+  </div>
       {/* Product Overview Card */}
       <s-section>
         <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
           <s-stack direction="block" gap="tight">
+            <div style={{ marginBottom: '15px'}}>
             <s-heading variant="headingMd">Produktübersicht  </s-heading>
+            </div>
             <s-divider />
-            <s-stack direction="inline" gap="loose" style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: '15px'}}>
+            <s-stack direction="inline" gap="loose" style={{ marginTop: '15px' }}>
               <div style={{ flex: 1 }}>
                 <s-text variant="bodySm" tone="subdued">Shopify Product ID  </s-text>
                 <s-text variant="bodyMd"><strong>{product.shopifyProductId}</strong></s-text>
@@ -582,6 +586,7 @@ const handleStepDragEnd = (event) => {
                 <s-text variant="bodyMd"><strong>{product.steps.length}</strong></s-text>
               </div>
             </s-stack>
+            </div>
           </s-stack>
         </s-box>
       </s-section>
@@ -1060,7 +1065,7 @@ const handleStepDragEnd = (event) => {
                   {step.type === "OPTIONS" && (
                     <>
                       <s-divider />
-                      <div>
+                      <div style={{ margin: "10px"}}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', padding: '12px' }}>
                           <s-heading variant="headingSm">Kundenauswahl  ({step.options.length})</s-heading>
                           <s-button
@@ -1089,7 +1094,7 @@ const handleStepDragEnd = (event) => {
                             }}
                           >
                             + Auswahl hinzufügen
-                          </s-button>
+                          </s-button>                     
                         </div>
 
                         {step.options.length === 0 ? (
@@ -1110,8 +1115,10 @@ const handleStepDragEnd = (event) => {
                                 {step.options.map((option) => (
                                   <SortableItem key={option.id} id={option.id}>
                                     <div
+                                    className="sjdfjsdfdh"
                                 key={option.id}
                                 style={{
+                                  marginBottom: '10px',
                                   padding: '16px',
                                   background: 'white',
                                   borderRadius: '6px',
