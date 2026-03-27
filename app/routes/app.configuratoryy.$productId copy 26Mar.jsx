@@ -1138,34 +1138,11 @@ const handleStepDragEnd = (event) => {
 
                                   {/* Option Details */}
                                   <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', justifyContent: 'space-between' }}>
-                                      <div className="price-text" style={{ display: 'flex', gap: '6px'}}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                                       <s-text variant="bodyMd"><strong>{option.label}</strong></s-text>
                                       {option.price > 0 && (
                                         <s-badge tone="success">+€{option.price.toFixed(2)}</s-badge>
                                       )}
-                                      </div>
-                                      {/* Option Actions */}
-                                  <div style={{ display: 'flex', gap: '6px' }}>
-                                    <s-button
-                                      variant="secondary"
-                                      size="slim"
-                                      onClick={() => {
-                                        setShowOptionForm(step.id);
-                                        handleEditOption(option, step.id);
-                                      }}
-                                    >
-                                      Bearbeiten
-                                    </s-button>
-                                    <s-button
-                                      variant="tertiary"
-                                      tone="critical"
-                                      size="slim"
-                                      onClick={() => handleDeleteOption(option.id)}
-                                    >
-                                      Löschen
-                                    </s-button>
-                                  </div>
                                     </div>
 
                                     <s-text variant="bodySm" tone="subdued" style={{ fontFamily: 'monospace', fontSize: '12px', display: 'block', marginBottom: '6px' }}>
@@ -1196,7 +1173,27 @@ const handleStepDragEnd = (event) => {
                                     )}
                                   </div>
 
-                                  
+                                  {/* Option Actions */}
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    <s-button
+                                      variant="secondary"
+                                      size="slim"
+                                      onClick={() => {
+                                        setShowOptionForm(step.id);
+                                        handleEditOption(option, step.id);
+                                      }}
+                                    >
+                                      Bearbeiten
+                                    </s-button>
+                                    <s-button
+                                      variant="tertiary"
+                                      tone="critical"
+                                      size="slim"
+                                      onClick={() => handleDeleteOption(option.id)}
+                                    >
+                                      Löschen
+                                    </s-button>
+                                  </div>
                                 </div>
                               </div>
                                   </SortableItem>
