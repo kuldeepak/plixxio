@@ -1192,13 +1192,38 @@ const handleStepDragEnd = (event) => {
 
                                     {option.showSteps && (
                                       <div style={{
-                                        background: '#e0f2fe',
+                                        // background: '#e0f2fe',
                                         padding: '8px 12px',
                                         borderRadius: '4px',
                                         marginTop: '8px',
-                                        display: 'inline-block'
+                                        // display: 'inline-block'
                                       }}>
-                                        <s-text variant="bodySm"><strong>Nächste Schritte: </strong> {option.showSteps}</s-text>
+                                        {/* <s-text variant="bodySm"><strong>Nächste Schritte: </strong> {option.showSteps}</s-text> */}
+                                       {option.showSteps && (() => {
+  let steps = [];
+
+  try {
+    steps = JSON.parse(option.showSteps);
+  } catch (e) {
+    return null;
+  }
+
+  return (
+    <div>
+      <s-text variant="bodySm">
+        <strong>Nächste Schritte:</strong>
+      </s-text>
+
+      <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>
+        {steps.map((step, index) => (
+          <li key={index}>
+            <s-text variant="bodySm">{step}</s-text>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+})()}
                                       </div>
                                     )}
                                   </div>
