@@ -136,7 +136,6 @@ export const action = async ({ request, params }) => {
       const price = parseFloat(formData.get("price") || 0);
       const sku = formData.get("sku") || "";
       const showSteps = formData.get("showSteps") || null;
-      const parentOptionIds = formData.get("parentOptionIds") || null;
 
       const maxOrderOption = await prisma.stepOption.findFirst({
         where: { stepId },
@@ -155,7 +154,6 @@ export const action = async ({ request, params }) => {
           price,
           sku,
           showSteps,
-          parentOptionIds,
           order,
         },
       });
@@ -175,7 +173,6 @@ export const action = async ({ request, params }) => {
       const price = parseFloat(formData.get("price") || 0);
       const sku = formData.get("sku") || "";
       const showSteps = formData.get("showSteps") || null;
-      const parentOptionIds = formData.get("parentOptionIds") || null;
 
       const option = await prisma.stepOption.update({
         where: { id: optionId },
@@ -187,7 +184,6 @@ export const action = async ({ request, params }) => {
           price,
           sku,
           showSteps,
-          parentOptionIds,
         },
       });
 
@@ -294,7 +290,6 @@ export default function ConfigureProduct() {
     price: "0",
     sku: "",
     showSteps: "",
-    parentOptionIds: [],
   });
 
   const [uploadingStepImage, setUploadingStepImage] = useState(false);
@@ -434,9 +429,6 @@ export default function ConfigureProduct() {
       price: option.price.toString(),
       sku: option.sku || "",
       showSteps: option.showSteps || "",
-      parentOptionIds: option.parentOptionIds
-    ? JSON.parse(option.parentOptionIds)
-    : [],
     });
 
     // Scroll to option form after a short delay
@@ -482,10 +474,6 @@ export default function ConfigureProduct() {
     submitData.append("price", optionFormData.price);
     submitData.append("sku", optionFormData.sku);
     submitData.append("showSteps", optionFormData.showSteps);
-    submitData.append(
-  "parentOptionIds",
-  JSON.stringify(optionFormData.parentOptionIds)
-);
 
     fetcher.submit(submitData, { method: "POST" });
   };
@@ -670,7 +658,7 @@ const handleStepDragEnd = (event) => {
                   <div style={{ padding: "10px" }}>
                     <s-text variant="bodyMd"><strong>Schritttyp </strong></s-text>
                     <s-text variant="bodySm" tone="subdued">Wählen Sie aus, wie Kunden mit diesem Schritt interagieren sollen</s-text>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
                       <div
                         onClick={() => setStepFormData({ ...stepFormData, type: "OPTIONS" })}
                         style={{
@@ -701,27 +689,6 @@ const handleStepDragEnd = (event) => {
                         <s-text variant="bodyMd"><strong>Maße </strong></s-text>
                         <s-text variant="bodySm" tone="subdued">Kunden geben eine individuelle Breite und Höhe ein.</s-text>
                       </div>
-                      <div
-  onClick={() => setStepFormData({ ...stepFormData, type: "DROPDOWN" })}
-  style={{
-    padding: '16px',
-    border: stepFormData.type === "DROPDOWN"
-      ? '2px solid #008060'
-      : '2px solid #e1e3e5',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    backgroundColor: stepFormData.type === "DROPDOWN"
-      ? '#f6f6f7'
-      : '#fff',
-    transition: 'all 0.2s'
-  }}
->
-  <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔽</div>
-  <s-text variant="bodyMd"><strong>Dropdown</strong></s-text>
-  <s-text variant="bodySm" tone="subdued">
-    Kunden wählen aus einer Dropdown-Liste
-  </s-text>
-</div>
                     </div>
                   </div>
 
@@ -1015,21 +982,9 @@ const handleStepDragEnd = (event) => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                         <s-badge tone="info">Step {step.order}</s-badge>
                         <s-heading variant="headingMd">{step.title}</s-heading>
-                        <s-badge
-  tone={
-    step.type === "OPTIONS"
-      ? "success"
-      : step.type === "DROPDOWN"
-      ? "info"
-      : "attention"
-  }
->
-  {step.type === "OPTIONS"
-    ? "📋 Multiple Choice"
-    : step.type === "DROPDOWN"
-    ? "🔽 Dropdown"
-    : "📏 Measurements"}
-</s-badge>
+                        <s-badge tone={step.type === "OPTIONS" ? "success" : "attention"}>
+                          {step.type === "OPTIONS" ? "📋 Multiple Choice" : "📏 Measurements"}
+                        </s-badge>
                       </div>
                       {step.subtitle && (
                         <s-text tone="subdued">{step.subtitle}</s-text>
@@ -1107,7 +1062,7 @@ const handleStepDragEnd = (event) => {
                   )}
 
                   {/* Options Section (for OPTIONS type) */}
-                  {(step.type === "OPTIONS" || step.type === "DROPDOWN") && (
+                  {step.type === "OPTIONS" && (
                     <>
                       <s-divider />
                       <div style={{ margin: "10px"}}>
@@ -1374,37 +1329,6 @@ const handleStepDragEnd = (event) => {
                                     }}
                                   />
                                 </div>
-{step.type === 'DROPDOWN' && (
-                                <div>
-  <label>
-    <s-text variant="bodySm">
-      <strong>Parent Option (Dependency)</strong>
-    </s-text>
-  </label>
-
-  <select
-  multiple
-  value={optionFormData.parentOptionIds || []}
-  onChange={(e) => {
-    const selected = Array.from(e.target.selectedOptions, o => o.value);
-
-    setOptionFormData({
-      ...optionFormData,
-      parentOptionIds: selected,
-    });
-  }}
->
-  {product.steps
-    .filter(s => s.order < step.order)
-    .flatMap(s => s.options)
-    .map(opt => (
-      <option key={opt.id} value={opt.value}>
-        {opt.label}
-      </option>
-    ))}
-</select>
-</div>
-)}
 
                                 <div>
                                   <label style={{ display: 'block', marginBottom: '4px' }}>

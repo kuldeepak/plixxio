@@ -1374,7 +1374,7 @@ const handleStepDragEnd = (event) => {
                                     }}
                                   />
                                 </div>
-{step.type === 'DROPDOWN' && (
+
                                 <div>
   <label>
     <s-text variant="bodySm">
@@ -1398,13 +1398,12 @@ const handleStepDragEnd = (event) => {
     .filter(s => s.order < step.order)
     .flatMap(s => s.options)
     .map(opt => (
-      <option key={opt.id} value={opt.value}>
+      <option key={opt.id} value={opt.id}>
         {opt.label}
       </option>
     ))}
 </select>
 </div>
-)}
 
                                 <div>
                                   <label style={{ display: 'block', marginBottom: '4px' }}>

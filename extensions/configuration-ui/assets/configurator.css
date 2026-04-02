@@ -1033,3 +1033,23 @@ body .config-right {
     width: 100%;
 }
 }
+
+
+.dropdown-field select {
+    width: 40%;
+    border: solid 1px #f8f9fa;
+    padding: 13px;
+    border-radius: 27px;
+    background: #f8f9fa;
+    border-right: solid 11px #f8f9fa;
+}
+.dropdown-step-row .dropdown-label {
+    font-size: 13px;
+    font-weight: 600;
+}
+.dropdown-field {
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}

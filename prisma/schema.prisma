@@ -95,6 +95,7 @@ model StepOption {
   image       String?
   price       Float    @default(0)  // addon price
   sku         String?   @default("")
+  parentOptionIds String?
   
   // Conditional flow - JSON string of step keys
   showSteps   String?  // JSON: ["befestigung", "masse", "befestigung_test_1"]

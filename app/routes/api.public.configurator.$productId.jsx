@@ -79,7 +79,7 @@ export const loader = async ({ params }) => {
                     image: step.image,
                 };
 
-                if (step.type === "OPTIONS") {
+                if (step.type === "OPTIONS" || step.type === "DROPDOWN") {
                     stepData.options = step.options.map(option => ({
                         value: option.value,
                         label: option.label,
@@ -88,6 +88,7 @@ export const loader = async ({ params }) => {
                         price: option.price,
                         showSteps: option.showSteps ? JSON.parse(option.showSteps) : null,
                         order: option.order,
+                        parentOptionIds: option.parentOptionIds || null,
                     }));
                 }
 
