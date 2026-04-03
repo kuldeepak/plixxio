@@ -136,11 +136,7 @@ export const action = async ({ request, params }) => {
       const price = parseFloat(formData.get("price") || 0);
       const sku = formData.get("sku") || "";
       const showSteps = formData.get("showSteps") || null;
-      let parentOptionIds = formData.get("parentOptionIds");
-
-if (!parentOptionIds || parentOptionIds === "[]" || parentOptionIds === "undefined") {
-  parentOptionIds = null;
-}
+      const parentOptionIds = formData.get("parentOptionIds") || null;
 
       const maxOrderOption = await prisma.stepOption.findFirst({
         where: { stepId },
@@ -179,11 +175,7 @@ if (!parentOptionIds || parentOptionIds === "[]" || parentOptionIds === "undefin
       const price = parseFloat(formData.get("price") || 0);
       const sku = formData.get("sku") || "";
       const showSteps = formData.get("showSteps") || null;
-      let parentOptionIds = formData.get("parentOptionIds");
-
-if (!parentOptionIds || parentOptionIds === "[]" || parentOptionIds === "undefined") {
-  parentOptionIds = null;
-}
+      const parentOptionIds = formData.get("parentOptionIds") || null;
 
       const option = await prisma.stepOption.update({
         where: { id: optionId },
@@ -346,7 +338,6 @@ export default function ConfigureProduct() {
       price: "0",
       sku: "",
       showSteps: "",
-      parentOptionIds: [],  
     });
   };
 
