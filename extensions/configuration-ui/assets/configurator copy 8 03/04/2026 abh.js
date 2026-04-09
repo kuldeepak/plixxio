@@ -51,11 +51,7 @@ function updateURL() {
         newURL
     );
 }
-function decodeHTML(html) {
-  const txt = document.createElement("textarea");
-  txt.innerHTML = html;
-  return txt.value;
-}
+
 function loadStateFromURL() {
     const params = new URLSearchParams(window.location.search);
     const urlState = {
@@ -218,8 +214,6 @@ function groupSteps(steps) {
     return groups;
 }
 
-
-
 /* =====================================================
    STEP GENERATION
 ===================================================== */
@@ -236,10 +230,9 @@ function createStepShell(step, index, isDropdownGroup = false) {
            data-step-key="${stepKey}"
            ${isDropdownGroup ? 'data-dropdown-group="true"' : ''}>
         <div class="heading_content_div">
-          <h2>${title || ''}</h2>
-          <p>${subtitle || ''}</p>
+            <h2>${title}</h2>
+            <p>${subtitle}</p>
         </div>
-        
         ${description ? `<div class="heading_content_div_1">${description}</div>` : ""}
         ${image ? `<div class="option-zoom"><img src="${image}"></div>` : ""}
 
@@ -627,27 +620,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     console.log('Configuration loaded:', PRODUCT_CONFIG);
 
-    function stripHTML(html) {
-  if (!html) return "";
-
-  const temp = document.createElement("div");
-  temp.innerHTML = html;
-
-  return (temp.textContent || temp.innerText || "")
-    .replace(/﻿/g, "") // remove invisible char
-    .trim();
-}
-
-if (PRODUCT_CONFIG) {
-  document.querySelector('.pro_name').textContent =
-    stripHTML(PRODUCT_CONFIG.product.name);
-
-  document.querySelector('.steps_name').textContent =
-    PRODUCT_CONFIG.steps
-      .slice(0, 2)
-      .map(s => stripHTML(s.title))
-      .join(', ');
-}
+    if (PRODUCT_CONFIG) {
+        document.querySelector('.pro_name').textContent = PRODUCT_CONFIG.product.name;
+        document.querySelector('.steps_name').textContent =
+            PRODUCT_CONFIG.steps.slice(0, 2).map(s => s.title).join(', ');
+    }
 
     let activeFlow = [];
     let currentStepIndex = 0;
@@ -1037,24 +1014,22 @@ if (PRODUCT_CONFIG) {
 
         config.steps.forEach(step => {
             if (activeFlow.length && !activeFlow.includes(step.key)) return;
-            
-            const cleanTitle = stripHTML(step.title);
 
             if (step.type === "measurement") {
                 finalTable.insertAdjacentHTML("beforeend", `
-                    <tr><td>${cleanTitle}</td><td data-final="masse">—</td></tr>
+                    <tr><td>${step.title}</td><td data-final="masse">—</td></tr>
                 `);
                 sideList.insertAdjacentHTML("beforeend", `
-                    <li><strong>${cleanTitle}:</strong> <span data-summary-alt="masse">—</span></li>
+                    <li><strong>${step.title}:</strong> <span data-summary-alt="masse">—</span></li>
                 `);
                 return;
             }
 
             finalTable.insertAdjacentHTML("beforeend", `
-                <tr><td>${cleanTitle}</td><td data-final="${step.key}">—</td></tr>
+                <tr><td>${step.title}</td><td data-final="${step.key}">—</td></tr>
             `);
             sideList.insertAdjacentHTML("beforeend", `
-                <li><strong>${cleanTitle}:</strong> <span data-summary-alt="${step.key}">—</span></li>
+                <li><strong>${step.title}:</strong> <span data-summary-alt="${step.key}">—</span></li>
             `);
         });
     }

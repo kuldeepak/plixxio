@@ -1053,3 +1053,20 @@ body .config-right {
     flex-direction: column;
     gap: 7px;
 }
+/* .config-right .summary-box em, .config-right .summary-box p s, .config-right .summary-box u, .config-right .summary-box p {
+    font-style: normal;
+    text-decoration: none;
+    text-decoration: none;
+    font-weight: 300;
+} */
+/* table.final-summary td s, table.final-summary td u, table.final-summary td em, table.final-summary td p  {
+    text-decoration: none;
+    text-decoration: none;
+    font-style: normal;
+    font-weight: 300;
+} */
+
+.config-step h1 {
+    text-align: center;
+    margin: 7px 0px;
+}
