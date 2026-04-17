@@ -90,13 +90,15 @@
     {% assign main_image = product.featured_image | image_url: width: 800 %}
 
 <div class="zoom-wrapper">
-  <div class="zoom-thumb"
-       data-url="{{ main_image }}"
-       style="background-image:url('{{ main_image }}');">
-  </div>
+  {% assign featured_image = current_variant.featured_image | default: product.featured_image %}
+
+<div class="zoom-thumb"
+     data-url="{{ featured_image | image_url: width: 1200 }}"
+     style="background-image:url('{{ featured_image | image_url: width: 600 }}');">
+</div>
 
   <div class="zoom-preview"
-       style="background-image:url('{{ main_image }}');">
+       style="background-image:url('{{ featured_image | image_url: width: 1200 }}');">
   </div>
 </div>
 
