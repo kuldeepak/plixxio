@@ -5,6 +5,35 @@
 let PRODUCT_CONFIG = null; // Will be loaded from API
 let PRODUCT_ID = null; // Shopify Product ID
 
+/* ===============================
+   UPDATE ZOOM FROM VARIANT
+================================ */
+async function updateZoomFromVariant(variantId) {
+    const thumb = document.getElementById("zoomThumb");
+    const preview = document.getElementById("zoomPreview");
+    if (!thumb || !preview) return;
+
+    const fallback = thumb.dataset.fallback;
+
+    try {
+        // Shopify public endpoint
+        const res = await fetch(`/variants/${variantId}.js`);
+        const variant = await res.json();
+
+        let img = variant.featured_image?.src;
+
+        if (!img) img = fallback;
+
+        thumb.dataset.url = img;
+        thumb.style.backgroundImage = `url("${img}")`;
+        preview.style.backgroundImage = `url("${img}")`;
+
+        console.log("Variant image loaded:", img);
+    } catch (err) {
+        console.error("Variant image error", err);
+    }
+}
+
 /* =====================================================
    STATE - GLOBAL SCOPE
 ===================================================== */
@@ -1171,9 +1200,11 @@ if (PRODUCT_CONFIG) {
             }
 
             let variantId = createData.shopifyProduct.variantId;
+            
             if (variantId.includes('gid://')) {
                 variantId = variantId.split('/').pop();
             }
+             updateZoomFromVariant(variantId);
 
             const fullURL = window.location.href;
             const params = new URLSearchParams(window.location.search);
