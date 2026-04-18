@@ -47,15 +47,60 @@ let state = {
    URL STATE MANAGEMENT
 ===================================================== */
 
+/* ========================================
+   GET FIRST VARIANT IMAGE & UPDATE URL
+======================================== */
+async function replaceURLImageWithFirstVariant() {
+    try {
+        const configuratorEl = document.getElementById('configuratorSteps');
+        const productId = configuratorEl?.dataset?.productId;
+        if (!productId) return;
+
+        // product JSON from Shopify
+        const res = await fetch(`/products/${productId}.js`);
+        const product = await res.json();
+
+        if (!product.variants || !product.variants.length) return;
+
+        // first variant
+        const firstVariant = product.variants[0];
+        const variantImage = firstVariant?.featured_image?.src;
+        if (!variantImage) return;
+
+        const params = new URLSearchParams(window.location.search);
+        params.set('img', encodeURIComponent(variantImage));
+
+        const newURL = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState({}, '', newURL);
+
+        console.log("URL image replaced with first variant:", variantImage);
+
+    } catch (err) {
+        console.error("Variant image URL replace error", err);
+    }
+}
+
 function updateURL() {
     const currentParams = new URLSearchParams(window.location.search);
     const params = new URLSearchParams();
 
-    ['product_id', 'img', 'color'].forEach(key => {
-        if (currentParams.has(key)) {
-            params.set(key, currentParams.get(key));
-        }
-    });
+    // ['product_id', 'img', 'color'].forEach(key => {
+    //     if (currentParams.has(key)) {
+    //         params.set(key, currentParams.get(key));
+    //     }
+    // });
+
+    // product_id & color preserve karo, img hum khud set karenge
+['product_id', 'color'].forEach(key => {
+    if (currentParams.has(key)) {
+        params.set(key, currentParams.get(key));
+    }
+});
+
+// Always keep latest img from URL (already replaced by first variant)
+if (currentParams.has('img')) {
+    params.set('img', currentParams.get('img'));
+}
 
     Object.entries(state.selections).forEach(([key, value]) => {
         if (value != null && value !== '') {
@@ -607,6 +652,8 @@ function applySelectionsWithDependencies() {
    MAIN INIT
 ===================================================== */
 document.addEventListener("DOMContentLoaded", async function () {
+
+    await replaceURLImageWithFirstVariant();
 
     // ============================================
     // GET PRODUCT ID FROM PAGE
