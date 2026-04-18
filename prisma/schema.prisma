@@ -45,6 +45,7 @@ model Product {
   name            String
   basePrice       Float    @default(0)
   sku               String?
+  defaultVariantImage String?
   
   // Relations
   steps           ConfigurationStep[]

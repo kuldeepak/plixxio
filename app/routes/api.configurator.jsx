@@ -59,7 +59,7 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  await authenticate.admin(request);
+ const { admin } = await authenticate.admin(request);
 
   const formData = await request.formData();
   const actionType = formData.get("action");
@@ -68,24 +68,62 @@ export const action = async ({ request }) => {
 
   try {
     if (actionType === "createProduct") {
-      const shopifyProductId = formData.get("shopifyProductId");
-      const name = formData.get("name");
-      const basePrice = parseFloat(formData.get("basePrice") || 0);
+  const { admin } = await authenticate.admin(request);
 
-      console.log("Creating product:", { shopifyProductId, name, basePrice }); // Debug log
+  const shopifyProductId = formData.get("shopifyProductId");
+  const name = formData.get("name");
+  const basePrice = parseFloat(formData.get("basePrice") || 0);
 
-      const product = await prisma.product.create({
-        data: {
-          shopifyProductId,
-          name,
-          basePrice,
-        },
-      });
+  console.log("Creating product:", { shopifyProductId, name, basePrice });
 
-      console.log("Product created:", product); // Debug log
+  // 🟢 STEP 1 — Shopify se FIRST VARIANT IMAGE fetch karo
+  let firstVariantImage = null;
 
-      return json({ success: true, product });
-    }
+  try {
+    const response = await admin.graphql(
+      `#graphql
+      query getProduct($id: ID!) {
+        product(id: $id) {
+          variants(first: 1) {
+            edges {
+              node {
+                image {
+                  url
+                }
+              }
+            }
+          }
+        }
+      }`,
+      {
+        variables: { id: shopifyProductId },
+      }
+    );
+
+    const shopifyData = await response.json();
+
+    firstVariantImage =
+      shopifyData?.data?.product?.variants?.edges[0]?.node?.image?.url || null;
+
+    console.log("Variant image fetched:", firstVariantImage);
+  } catch (err) {
+    console.log("Image fetch failed, using null");
+  }
+
+  // 🟢 STEP 2 — DB me SAVE karo (IMPORTANT)
+  const product = await prisma.product.create({
+    data: {
+      shopifyProductId,
+      name,
+      basePrice,
+      defaultVariantImage: firstVariantImage, // ⭐ NEW FIELD
+    },
+  });
+
+  console.log("Product created:", product);
+
+  return json({ success: true, product });
+}
 
     if (actionType === "createStep") {
       const productId = formData.get("productId");
