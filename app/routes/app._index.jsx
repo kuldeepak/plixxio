@@ -12,66 +12,107 @@ export const loader = async ({ request }) => {
 
 export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
-  const color = ["Red", "Orange", "Yellow", "Green"][
-    Math.floor(Math.random() * 4)
-  ];
-  const response = await admin.graphql(
+
+  const DEMO_IMAGE =
+    "https://plixxo-de.myshopify.com/cdn/shop/files/1_Plissee_quarzgrau_Wohnzimmer-md.webp?v=1770817456&width=800"; // 👉 koi bhi public image
+
+  /* -----------------------------------
+  1️⃣ CREATE PRODUCT
+  ----------------------------------- */
+  const productRes = await admin.graphql(
     `#graphql
-      mutation populateProduct($product: ProductCreateInput!) {
-        productCreate(product: $product) {
-          product {
-            id
-            title
-            handle
-            status
-            variants(first: 10) {
-              edges {
-                node {
-                  id
-                  price
-                  barcode
-                  createdAt
-                }
-              }
+    mutation populateProduct($product: ProductCreateInput!) {
+      productCreate(product: $product) {
+        product {
+          id
+          title
+          handle
+          variants(first: 1) {
+            edges {
+              node { id }
             }
           }
         }
-      }`,
+      }
+    }`,
     {
       variables: {
-        product: {
-          title: `${color} Snowboard`,
-        },
+        product: { title: "Configurator Product" },
       },
-    },
+    }
   );
-  const responseJson = await response.json();
-  const product = responseJson.data.productCreate.product;
+
+  const productJson = await productRes.json();
+  const product = productJson.data.productCreate.product;
   const variantId = product.variants.edges[0].node.id;
-  const variantResponse = await admin.graphql(
+
+  /* -----------------------------------
+  2️⃣ UPLOAD PRODUCT IMAGE (MEDIA)
+  ----------------------------------- */
+  const mediaRes = await admin.graphql(
     `#graphql
-    mutation shopifyReactRouterTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+    mutation addImage($productId: ID!, $media: [CreateMediaInput!]!) {
+      productCreateMedia(productId: $productId, media: $media) {
+        media { id status }
+        mediaUserErrors { message }
+      }
+    }`,
+    {
+      variables: {
+        productId: product.id,
+        media: [
+          {
+            originalSource: DEMO_IMAGE,
+            mediaContentType: "IMAGE",
+          },
+        ],
+      },
+    }
+  );
+
+  const mediaJson = await mediaRes.json();
+  const imageId = mediaJson.data.productCreateMedia.media[0].id;
+
+  /* -----------------------------------
+  3️⃣ WAIT (Shopify needs few ms)
+  ----------------------------------- */
+  await new Promise(r => setTimeout(r, 2000));
+
+  /* -----------------------------------
+  4️⃣ UPDATE VARIANT → ADD IMAGE + PRICE
+  ----------------------------------- */
+  const variantRes = await admin.graphql(
+    `#graphql
+    mutation updateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
       productVariantsBulkUpdate(productId: $productId, variants: $variants) {
         productVariants {
           id
           price
-          barcode
-          createdAt
+          media {
+            preview { image { url } }
+          }
         }
       }
     }`,
     {
       variables: {
         productId: product.id,
-        variants: [{ id: variantId, price: "100.00" }],
+        variants: [
+          {
+            id: variantId,
+            price: "100.00",
+            mediaId: imageId   // ⭐ VARIANT IMAGE SET
+          },
+        ],
       },
-    },
+    }
   );
-  const variantResponseJson = await variantResponse.json();
+
+  const variantJson = await variantRes.json();
 
   return {
-    product: responseJson.data.productCreate.product,
-    variant: variantResponseJson.data.productVariantsBulkUpdate.productVariants,
+    product,
+    variant: variantJson.data.productVariantsBulkUpdate.productVariants,
   };
 };
 

@@ -135,51 +135,51 @@ async function replaceURLImageWithFirstVariant() {
     }
 }
 
-function updateURL() {
-    const currentParams = new URLSearchParams(window.location.search);
-    const params = new URLSearchParams();
+// function updateURL() {
+//     const currentParams = new URLSearchParams(window.location.search);
+//     const params = new URLSearchParams();
 
-    // ['product_id', 'img', 'color'].forEach(key => {
-    //     if (currentParams.has(key)) {
-    //         params.set(key, currentParams.get(key));
-    //     }
-    // });
+//     // ['product_id', 'img', 'color'].forEach(key => {
+//     //     if (currentParams.has(key)) {
+//     //         params.set(key, currentParams.get(key));
+//     //     }
+//     // });
 
-    // product_id & color preserve karo, img hum khud set karenge
-['product_id', 'color'].forEach(key => {
-    if (currentParams.has(key)) {
-        params.set(key, currentParams.get(key));
-    }
-});
+//     // product_id & color preserve karo, img hum khud set karenge
+// ['product_id', 'color'].forEach(key => {
+//     if (currentParams.has(key)) {
+//         params.set(key, currentParams.get(key));
+//     }
+// });
 
-// Always keep latest img from URL (already replaced by first variant)
-if (currentParams.has('img')) {
-    params.set('img', currentParams.get('img'));
-}
+// // Always keep latest img from URL (already replaced by first variant)
+// if (currentParams.has('img')) {
+//     params.set('img', currentParams.get('img'));
+// }
 
-    Object.entries(state.selections).forEach(([key, value]) => {
-        if (value != null && value !== '') {
-            params.set(`sel_${key}`, value);
-        }
-    });
+//     Object.entries(state.selections).forEach(([key, value]) => {
+//         if (value != null && value !== '') {
+//             params.set(`sel_${key}`, value);
+//         }
+//     });
 
-    Object.entries(state.measurements).forEach(([key, value]) => {
-        if (value != null && value !== '') {
-            params.set(`m_${key}`, value);
-        }
-    });
+//     Object.entries(state.measurements).forEach(([key, value]) => {
+//         if (value != null && value !== '') {
+//             params.set(`m_${key}`, value);
+//         }
+//     });
 
-    if (state.menge && state.menge !== 1) {
-        params.set('qty', state.menge);
-    }
+//     if (state.menge && state.menge !== 1) {
+//         params.set('qty', state.menge);
+//     }
 
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState(
-        { state: JSON.parse(JSON.stringify(state)) },
-        '',
-        newURL
-    );
-}
+//     const newURL = `${window.location.pathname}?${params.toString()}`;
+//     window.history.pushState(
+//         { state: JSON.parse(JSON.stringify(state)) },
+//         '',
+//         newURL
+//     );
+// }
 function decodeHTML(html) {
   const txt = document.createElement("textarea");
   txt.innerHTML = html;
