@@ -50,42 +50,88 @@ let state = {
 /* ========================================
    GET FIRST VARIANT IMAGE & UPDATE URL
 ======================================== */
+// async function replaceURLImageWithFirstVariant() {
+//     try {
+//         const configuratorEl = document.getElementById('configuratorSteps');
+//         const productId = configuratorEl?.dataset?.productId;
+//         if (!productId) return;
+
+//         const res = await fetch(`/products/${productId}.js`);
+//         const product = await res.json();
+
+//         if (!product.variants?.length) return;
+
+//         const firstVariant = product.variants[0];
+//         const variantImage = firstVariant?.featured_image?.src;
+//         if (!variantImage) return;
+
+//         // 👉 UPDATE ZOOM IMAGE
+//         const zoomThumb = document.getElementById("zoomThumb");
+//         const zoomPreview = document.getElementById("zoomPreview");
+
+//         if (zoomThumb && zoomPreview) {
+//             zoomThumb.dataset.url = variantImage;
+//             zoomThumb.style.backgroundImage = `url("${variantImage}")`;
+//             zoomPreview.style.backgroundImage = `url("${variantImage}")`;
+//         }
+
+//         // 👉 UPDATE URL
+//         const params = new URLSearchParams(window.location.search);
+//         params.set('img', encodeURIComponent(variantImage));
+
+//         const newURL = `${window.location.pathname}?${params.toString()}`;
+//         window.history.replaceState({}, '', newURL);
+
+//         console.log("First variant image applied:", variantImage);
+
+//     } catch (err) {
+//         console.error("Variant image error", err);
+//     }
+// }
+
 async function replaceURLImageWithFirstVariant() {
     try {
         const configuratorEl = document.getElementById('configuratorSteps');
-        const productId = configuratorEl?.dataset?.productId;
-        if (!productId) return;
+        const productHandle = configuratorEl?.dataset?.productHandle;
+        if (!productHandle) {
+            console.error("Product handle missing");
+            return;
+        }
 
-        const res = await fetch(`/products/${productId}.js`);
+        // Shopify product JSON (HANDLE se!)
+        const res = await fetch(`/products/${productHandle}.js`);
         const product = await res.json();
 
-        if (!product.variants?.length) return;
+        if (!product.variants?.length) {
+            console.error("No variants found");
+            return;
+        }
 
         const firstVariant = product.variants[0];
         const variantImage = firstVariant?.featured_image?.src;
-        if (!variantImage) return;
 
-        // 👉 UPDATE ZOOM IMAGE
+        if (!variantImage) {
+            console.warn("Variant has no image → fallback used");
+            return;
+        }
+
+        // update zoom image
         const zoomThumb = document.getElementById("zoomThumb");
         const zoomPreview = document.getElementById("zoomPreview");
 
-        if (zoomThumb && zoomPreview) {
-            zoomThumb.dataset.url = variantImage;
-            zoomThumb.style.backgroundImage = `url("${variantImage}")`;
-            zoomPreview.style.backgroundImage = `url("${variantImage}")`;
-        }
+        zoomThumb.dataset.url = variantImage;
+        zoomThumb.style.backgroundImage = `url("${variantImage}")`;
+        zoomPreview.style.backgroundImage = `url("${variantImage}")`;
 
-        // 👉 UPDATE URL
+        // update URL param
         const params = new URLSearchParams(window.location.search);
         params.set('img', encodeURIComponent(variantImage));
+        window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
 
-        const newURL = `${window.location.pathname}?${params.toString()}`;
-        window.history.replaceState({}, '', newURL);
-
-        console.log("First variant image applied:", variantImage);
+        console.log("✅ FIRST VARIANT IMAGE LOADED:", variantImage);
 
     } catch (err) {
-        console.error("Variant image error", err);
+        console.error("❌ Variant image load failed", err);
     }
 }
 
