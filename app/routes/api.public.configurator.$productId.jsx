@@ -68,6 +68,7 @@ export const loader = async ({ params }) => {
                 shopifyProductId: product.shopifyProductId,
                 name: product.name,
                 basePrice: product.basePrice,
+                defaultVariantImage: product.defaultVariantImage,
             },
             steps: product.steps.map(step => {
                 const stepData = {

@@ -5,35 +5,6 @@
 let PRODUCT_CONFIG = null; // Will be loaded from API
 let PRODUCT_ID = null; // Shopify Product ID
 
-/* ===============================
-   UPDATE ZOOM FROM VARIANT
-================================ */
-async function updateZoomFromVariant(variantId) {
-    const thumb = document.getElementById("zoomThumb");
-    const preview = document.getElementById("zoomPreview");
-    if (!thumb || !preview) return;
-
-    const fallback = thumb.dataset.fallback;
-
-    try {
-        // Shopify public endpoint
-        const res = await fetch(`/variants/${variantId}.js`);
-        const variant = await res.json();
-
-        let img = variant.featured_image?.src;
-
-        if (!img) img = fallback;
-
-        thumb.dataset.url = img;
-        thumb.style.backgroundImage = `url("${img}")`;
-        preview.style.backgroundImage = `url("${img}")`;
-
-        console.log("Variant image loaded:", img);
-    } catch (err) {
-        console.error("Variant image error", err);
-    }
-}
-
 /* =====================================================
    STATE - GLOBAL SCOPE
 ===================================================== */
@@ -47,139 +18,39 @@ let state = {
    URL STATE MANAGEMENT
 ===================================================== */
 
-/* ========================================
-   GET FIRST VARIANT IMAGE & UPDATE URL
-======================================== */
-// async function replaceURLImageWithFirstVariant() {
-//     try {
-//         const configuratorEl = document.getElementById('configuratorSteps');
-//         const productId = configuratorEl?.dataset?.productId;
-//         if (!productId) return;
+function updateURL() {
+    const currentParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams();
 
-//         const res = await fetch(`/products/${productId}.js`);
-//         const product = await res.json();
-
-//         if (!product.variants?.length) return;
-
-//         const firstVariant = product.variants[0];
-//         const variantImage = firstVariant?.featured_image?.src;
-//         if (!variantImage) return;
-
-//         // 👉 UPDATE ZOOM IMAGE
-//         const zoomThumb = document.getElementById("zoomThumb");
-//         const zoomPreview = document.getElementById("zoomPreview");
-
-//         if (zoomThumb && zoomPreview) {
-//             zoomThumb.dataset.url = variantImage;
-//             zoomThumb.style.backgroundImage = `url("${variantImage}")`;
-//             zoomPreview.style.backgroundImage = `url("${variantImage}")`;
-//         }
-
-//         // 👉 UPDATE URL
-//         const params = new URLSearchParams(window.location.search);
-//         params.set('img', encodeURIComponent(variantImage));
-
-//         const newURL = `${window.location.pathname}?${params.toString()}`;
-//         window.history.replaceState({}, '', newURL);
-
-//         console.log("First variant image applied:", variantImage);
-
-//     } catch (err) {
-//         console.error("Variant image error", err);
-//     }
-// }
-
-async function replaceURLImageWithFirstVariant() {
-    try {
-        const configuratorEl = document.getElementById('configuratorSteps');
-        const productHandle = configuratorEl?.dataset?.productHandle;
-        if (!productHandle) {
-            console.error("Product handle missing");
-            return;
+    ['product_id', 'img', 'color'].forEach(key => {
+        if (currentParams.has(key)) {
+            params.set(key, currentParams.get(key));
         }
+    });
 
-        // Shopify product JSON (HANDLE se!)
-        const res = await fetch(`/products/${productHandle}.js`);
-        const product = await res.json();
-
-        if (!product.variants?.length) {
-            console.error("No variants found");
-            return;
+    Object.entries(state.selections).forEach(([key, value]) => {
+        if (value != null && value !== '') {
+            params.set(`sel_${key}`, value);
         }
+    });
 
-        const firstVariant = product.variants[0];
-        const variantImage = firstVariant?.featured_image?.src;
-
-        if (!variantImage) {
-            console.warn("Variant has no image → fallback used");
-            return;
+    Object.entries(state.measurements).forEach(([key, value]) => {
+        if (value != null && value !== '') {
+            params.set(`m_${key}`, value);
         }
+    });
 
-        // update zoom image
-        const zoomThumb = document.getElementById("zoomThumb");
-        const zoomPreview = document.getElementById("zoomPreview");
-
-        zoomThumb.dataset.url = variantImage;
-        zoomThumb.style.backgroundImage = `url("${variantImage}")`;
-        zoomPreview.style.backgroundImage = `url("${variantImage}")`;
-
-        // update URL param
-        const params = new URLSearchParams(window.location.search);
-        params.set('img', encodeURIComponent(variantImage));
-        window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
-
-        console.log("✅ FIRST VARIANT IMAGE LOADED:", variantImage);
-
-    } catch (err) {
-        console.error("❌ Variant image load failed", err);
+    if (state.menge && state.menge !== 1) {
+        params.set('qty', state.menge);
     }
+
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState(
+        { state: JSON.parse(JSON.stringify(state)) },
+        '',
+        newURL
+    );
 }
-
-// function updateURL() {
-//     const currentParams = new URLSearchParams(window.location.search);
-//     const params = new URLSearchParams();
-
-//     // ['product_id', 'img', 'color'].forEach(key => {
-//     //     if (currentParams.has(key)) {
-//     //         params.set(key, currentParams.get(key));
-//     //     }
-//     // });
-
-//     // product_id & color preserve karo, img hum khud set karenge
-// ['product_id', 'color'].forEach(key => {
-//     if (currentParams.has(key)) {
-//         params.set(key, currentParams.get(key));
-//     }
-// });
-
-// // Always keep latest img from URL (already replaced by first variant)
-// if (currentParams.has('img')) {
-//     params.set('img', currentParams.get('img'));
-// }
-
-//     Object.entries(state.selections).forEach(([key, value]) => {
-//         if (value != null && value !== '') {
-//             params.set(`sel_${key}`, value);
-//         }
-//     });
-
-//     Object.entries(state.measurements).forEach(([key, value]) => {
-//         if (value != null && value !== '') {
-//             params.set(`m_${key}`, value);
-//         }
-//     });
-
-//     if (state.menge && state.menge !== 1) {
-//         params.set('qty', state.menge);
-//     }
-
-//     const newURL = `${window.location.pathname}?${params.toString()}`;
-//     window.history.pushState(
-//         { state: JSON.parse(JSON.stringify(state)) },
-//         '',
-//         newURL
-//     );
-// }
 function decodeHTML(html) {
   const txt = document.createElement("textarea");
   txt.innerHTML = html;
@@ -708,8 +579,6 @@ function applySelectionsWithDependencies() {
 ===================================================== */
 document.addEventListener("DOMContentLoaded", async function () {
 
-     await replaceURLImageWithFirstVariant();
-
     // ============================================
     // GET PRODUCT ID FROM PAGE
     // ============================================
@@ -725,17 +594,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.querySelector('.custom-alert .color').textContent = color;
         }
 
-        // if (img) {
-        //     const img_param_url = decodeURIComponent(img);
-        //     const zoomThumb = document.querySelector('.zoom-thumb');
-        //     const zoomPreview = document.querySelector('.zoom-preview');
+        const defaultImg = PRODUCT_CONFIG?.product?.defaultVariantImage;
 
-        //     if (zoomThumb && zoomPreview) {
-        //         zoomThumb.setAttribute('data-url', img_param_url);
-        //         zoomThumb.style.backgroundImage = `url("${img_param_url}")`;
-        //         zoomPreview.style.backgroundImage = `url("${img_param_url}")`;
-        //     }
-        // }
+if (defaultImg) {
+    const zoomThumb = document.querySelector('.zoom-thumb');
+    const zoomPreview = document.querySelector('.zoom-preview');
+
+    if (zoomThumb) {
+        zoomThumb.setAttribute('data-url', defaultImg);
+        zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
+    }
+
+    if (zoomPreview) {
+        zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
+    }
+}
 
         const configuratorEl = document.getElementById('configuratorSteps');
         PRODUCT_ID = productId || configuratorEl?.dataset?.productId;
@@ -757,6 +630,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!PRODUCT_CONFIG) return;
 
     console.log('Configuration loaded:', PRODUCT_CONFIG);
+    console.log(
+  "🖼️ DEFAULT VARIANT IMAGE FROM FRONTEND:",
+  PRODUCT_CONFIG?.product?.defaultVariantImage
+);
+
+if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
+    const defaultImg = PRODUCT_CONFIG.product.defaultVariantImage;
+
+    if (defaultImg) {
+        // 1. Zoom Thumb update (Background and Data Attribute)
+        const zoomThumb = document.querySelector('.zoom-thumb');
+        if (zoomThumb) {
+            zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
+            zoomThumb.setAttribute('data-url', defaultImg); // Zoom script aksar ye attribute read karta hai
+        }
+
+        // 2. Zoom Preview update
+        const zoomPreview = document.querySelector('.zoom-preview');
+        if (zoomPreview) {
+            zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
+        }
+
+        // 3. Optional: Agar koi main image tag <img> hai preview ke liye
+        const mainImgTag = document.querySelector('.config-image-main'); // Apni class check karein
+        if (mainImgTag) {
+            mainImgTag.src = defaultImg;
+        }
+    }
+}
+    
 
     function stripHTML(html) {
   if (!html) return "";
@@ -1302,11 +1205,9 @@ if (PRODUCT_CONFIG) {
             }
 
             let variantId = createData.shopifyProduct.variantId;
-            
             if (variantId.includes('gid://')) {
                 variantId = variantId.split('/').pop();
             }
-             updateZoomFromVariant(variantId);
 
             const fullURL = window.location.href;
             const params = new URLSearchParams(window.location.search);

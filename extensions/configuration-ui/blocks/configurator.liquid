@@ -77,8 +77,8 @@
   <div class="config-right">
 
     <!-- ZOOM -->
-   <div class="zoom-wrapper">
-  <div class="zoom-thumb"
+<div class="zoom-wrapper">
+  {% comment %} <div class="zoom-thumb"
        id="zoomThumb"
        data-fallback="https://cdn.shopify.com/extensions/019beb25-408f-70b4-9af9-8e2ffef35c2f/dev-1c8b5b1a-7798-4b7e-9065-4707d76812ce/assets/123.jpg"
        style="background-image:url('https://cdn.shopify.com/extensions/019beb25-408f-70b4-9af9-8e2ffef35c2f/dev-1c8b5b1a-7798-4b7e-9065-4707d76812ce/assets/123.jpg');">
@@ -87,8 +87,21 @@
   <div class="zoom-preview"
        id="zoomPreview"
        style="background-image:url('https://cdn.shopify.com/extensions/019beb25-408f-70b4-9af9-8e2ffef35c2f/dev-1c8b5b1a-7798-4b7e-9065-4707d76812ce/assets/123.jpg');">
-  </div>
+  </div> {% endcomment %}
+
+<div class="zoom-thumb"
+     id="zoomThumb"
+     data-default-image="{{ product.selected_or_first_available_variant.featured_image | default: product.featured_image | img_url: '800x' }}"
+     style="background-image:url('{{ product.selected_or_first_available_variant.featured_image | default: product.featured_image | img_url: '800x' }}');">
 </div>
+
+<div class="zoom-preview"
+     id="zoomPreview"
+     style="background-image:url('{{ product.selected_or_first_available_variant.featured_image | default: product.featured_image | img_url: '800x' }}');">
+</div>
+</div> 
+
+
 
     <!-- SUMMARY -->
     <div class="summary-box" id="summaryBoxAlt">
@@ -110,6 +123,8 @@
 
 
 {{ 'configurator.js' | asset_url | script_tag }}
+
+
 
 {% schema %}
 {

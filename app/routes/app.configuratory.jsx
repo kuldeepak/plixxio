@@ -15,25 +15,64 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  await authenticate.admin(request);
-
+  const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
   const shopifyProductId = formData.get("shopifyProductId");
   const name = formData.get("name");
   const basePrice = parseFloat(formData.get("basePrice") || 0);
 
   try {
+    let rawInput = String(shopifyProductId || "").trim();
+    
+    // 1. Numeric ID nikalna (Clean ID for DB)
+    // Agar input "gid://shopify/Product/12345" hai toh sirf "12345" lega
+    const numericId = rawInput.replace(/[^0-9]/g, ""); 
+
+    // 2. GID banana (Only for Shopify GraphQL Query)
+    const graphqlId = `gid://shopify/Product/${numericId}`;
+
+    if (!numericId) throw new Error("Invalid Shopify Product ID");
+
+    // GraphQL Query
+    const query = `
+      query getProductVariants($id: ID!) {
+        product(id: $id) {
+          variants(first: 1) { 
+            edges {
+              node {
+                image { url }
+              }
+            }
+          }
+          featuredImage { url }
+        }
+      }
+    `;
+
+    const response = await admin.graphql(query, { variables: { id: graphqlId } });
+    const result = await response.json();
+
+    if (result?.errors) throw new Error(result.errors[0].message);
+
+    const productData = result?.data?.product;
+    if (!productData) throw new Error("Product not found in Shopify.");
+
+    const firstVariant = productData.variants?.edges?.[0]?.node;
+    const variantImageUrl = firstVariant?.image?.url || productData.featuredImage?.url || "";
+
+    // 3. Save in Prisma (Using numericId)
     const product = await prisma.product.create({
       data: {
-        shopifyProductId,
-        name,
-        basePrice,
+        shopifyProductId: numericId, // <-- Ab yahan sirf numbers save honge
+        name: name,
+        basePrice: basePrice,
+        defaultVariantImage: variantImageUrl,
       },
     });
 
     return json({ success: true, product });
   } catch (error) {
-    console.error("Create Product Error:", error);
+    console.error("❌ Action Error:", error);
     return json({ success: false, error: error.message }, { status: 500 });
   }
 };

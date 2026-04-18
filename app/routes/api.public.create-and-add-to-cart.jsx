@@ -18,6 +18,7 @@ export const action = async ({ request }) => {
             quantity,
             calculatedPrice,
             baseProductTitle
+            
         } = body;
 
         if (!productId) {

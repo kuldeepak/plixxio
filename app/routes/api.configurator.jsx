@@ -13,19 +13,27 @@ export const loader = async ({ request }) => {
 
   try {
     if (action === "getProducts") {
+      console.log("SHOPIFY VARIANT IMAGE:", defaultVariantImage);
       const products = await prisma.product.findMany({
-        include: {
-          steps: {
-            include: {
-              options: true,
-            },
-            orderBy: {
-              order: "asc",
-            },
-          },
-          priceMatrices: true,
-        },
-      });
+  select: {
+    id: true,
+    shopifyProductId: true,
+    name: true,
+    basePrice: true,
+    defaultVariantImage: true,   // 🔥 ADD THIS
+
+    steps: {
+      include: {
+        options: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
+    },
+
+    priceMatrices: true,
+  },
+});
 
       return json({ success: true, products });
     }
@@ -33,21 +41,42 @@ export const loader = async ({ request }) => {
     if (action === "getProduct") {
       const productId = url.searchParams.get("productId");
 
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        include: {
-          steps: {
-            include: {
-              options: true,
-            },
-            orderBy: {
-              order: "asc",
-            },
-          },
-          priceMatrices: true,
-        },
-      });
+      // const product = await prisma.product.findUnique({
+      //   where: { id: productId },
+      //   include: {
+      //     steps: {
+      //       include: {
+      //         options: true,
+      //       },
+      //       orderBy: {
+      //         order: "asc",
+      //       },
+      //     },
+      //     priceMatrices: true,
+      //   },
+      // });
+const product = await prisma.product.findUnique({
+  where: { id: productId },
+  select: {
+    id: true,
+    shopifyProductId: true,
+    name: true,
+    basePrice: true,
+    defaultVariantImage: true,   // 🔥 THIS IS THE FIX
+    
 
+    steps: {
+      include: {
+        options: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
+    },
+
+    priceMatrices: true,
+  },
+});
       return json({ success: true, product });
     }
 
@@ -57,6 +86,8 @@ export const loader = async ({ request }) => {
     return json({ success: false, error: error.message }, { status: 500 });
   }
 };
+
+
 
 export const action = async ({ request }) => {
  const { admin } = await authenticate.admin(request);
@@ -70,13 +101,16 @@ export const action = async ({ request }) => {
     if (actionType === "createProduct") {
   const { admin } = await authenticate.admin(request);
 
-  const shopifyProductId = formData.get("shopifyProductId");
+  const rawProductId = formData.get("shopifyProductId");
+
+// Shopify GraphQL ke liye gid format banana zaroori hai
+const shopifyProductGid = `gid://shopify/Product/${rawProductId}`;
   const name = formData.get("name");
   const basePrice = parseFloat(formData.get("basePrice") || 0);
 
-  console.log("Creating product:", { shopifyProductId, name, basePrice });
+  console.log("Creating product:", { shopifyProductGid, name, basePrice , defaultVariantImage});
 
-  // 🟢 STEP 1 — Shopify se FIRST VARIANT IMAGE fetch karo
+  // 🟢 STEP 1 — Shopify se FIRST VARIANT IMAGE fetch kar
   let firstVariantImage = null;
 
   try {
@@ -96,7 +130,7 @@ export const action = async ({ request }) => {
         }
       }`,
       {
-        variables: { id: shopifyProductId },
+        variables: { id: shopifyProductGid },
       }
     );
 
@@ -111,14 +145,14 @@ export const action = async ({ request }) => {
   }
 
   // 🟢 STEP 2 — DB me SAVE karo (IMPORTANT)
-  const product = await prisma.product.create({
-    data: {
-      shopifyProductId,
-      name,
-      basePrice,
-      defaultVariantImage: firstVariantImage, // ⭐ NEW FIELD
-    },
-  });
+ const product = await prisma.product.create({
+  data: {
+    shopifyProductId: rawProductId,   
+    name,
+    basePrice,
+    defaultVariantImage: firstVariantImage,
+  },
+});
 
   console.log("Product created:", product);
 
