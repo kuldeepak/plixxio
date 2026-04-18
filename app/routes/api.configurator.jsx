@@ -13,7 +13,7 @@ export const loader = async ({ request }) => {
 
   try {
     if (action === "getProducts") {
-      console.log("SHOPIFY VARIANT IMAGE:", defaultVariantImage);
+     
       const products = await prisma.product.findMany({
   select: {
     id: true,
