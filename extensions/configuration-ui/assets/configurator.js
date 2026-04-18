@@ -56,27 +56,36 @@ async function replaceURLImageWithFirstVariant() {
         const productId = configuratorEl?.dataset?.productId;
         if (!productId) return;
 
-        // product JSON from Shopify
         const res = await fetch(`/products/${productId}.js`);
         const product = await res.json();
 
-        if (!product.variants || !product.variants.length) return;
+        if (!product.variants?.length) return;
 
-        // first variant
         const firstVariant = product.variants[0];
         const variantImage = firstVariant?.featured_image?.src;
         if (!variantImage) return;
 
+        // 👉 UPDATE ZOOM IMAGE
+        const zoomThumb = document.getElementById("zoomThumb");
+        const zoomPreview = document.getElementById("zoomPreview");
+
+        if (zoomThumb && zoomPreview) {
+            zoomThumb.dataset.url = variantImage;
+            zoomThumb.style.backgroundImage = `url("${variantImage}")`;
+            zoomPreview.style.backgroundImage = `url("${variantImage}")`;
+        }
+
+        // 👉 UPDATE URL
         const params = new URLSearchParams(window.location.search);
         params.set('img', encodeURIComponent(variantImage));
 
         const newURL = `${window.location.pathname}?${params.toString()}`;
         window.history.replaceState({}, '', newURL);
 
-        console.log("URL image replaced with first variant:", variantImage);
+        console.log("First variant image applied:", variantImage);
 
     } catch (err) {
-        console.error("Variant image URL replace error", err);
+        console.error("Variant image error", err);
     }
 }
 
@@ -653,7 +662,7 @@ function applySelectionsWithDependencies() {
 ===================================================== */
 document.addEventListener("DOMContentLoaded", async function () {
 
-    await replaceURLImageWithFirstVariant();
+     await replaceURLImageWithFirstVariant();
 
     // ============================================
     // GET PRODUCT ID FROM PAGE
@@ -670,17 +679,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.querySelector('.custom-alert .color').textContent = color;
         }
 
-        if (img) {
-            const img_param_url = decodeURIComponent(img);
-            const zoomThumb = document.querySelector('.zoom-thumb');
-            const zoomPreview = document.querySelector('.zoom-preview');
+        // if (img) {
+        //     const img_param_url = decodeURIComponent(img);
+        //     const zoomThumb = document.querySelector('.zoom-thumb');
+        //     const zoomPreview = document.querySelector('.zoom-preview');
 
-            if (zoomThumb && zoomPreview) {
-                zoomThumb.setAttribute('data-url', img_param_url);
-                zoomThumb.style.backgroundImage = `url("${img_param_url}")`;
-                zoomPreview.style.backgroundImage = `url("${img_param_url}")`;
-            }
-        }
+        //     if (zoomThumb && zoomPreview) {
+        //         zoomThumb.setAttribute('data-url', img_param_url);
+        //         zoomThumb.style.backgroundImage = `url("${img_param_url}")`;
+        //         zoomPreview.style.backgroundImage = `url("${img_param_url}")`;
+        //     }
+        // }
 
         const configuratorEl = document.getElementById('configuratorSteps');
         PRODUCT_ID = productId || configuratorEl?.dataset?.productId;
