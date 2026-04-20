@@ -63,7 +63,7 @@ export const action = async ({ request }) => {
     // 3. Save in Prisma (Using numericId)
     const product = await prisma.product.create({
       data: {
-        shopifyProductId: numericId, // <-- Ab yahan sirf numbers save honge
+        shopifyProductId: numericId, // 
         name: name,
         basePrice: basePrice,
         defaultVariantImage: variantImageUrl,
