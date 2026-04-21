@@ -1025,7 +1025,8 @@ if (PRODUCT_CONFIG) {
     }
 
     document.addEventListener("mousemove", function (e) {
-        const zoomBox = e.target.closest(".option-zoom");
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const zoomBox = targetEl?.closest?.(".option-zoom");
         if (!zoomBox) return;
 
         const img = zoomBox.querySelector("img");
@@ -1038,7 +1039,8 @@ if (PRODUCT_CONFIG) {
     });
 
     document.addEventListener("mouseleave", function (e) {
-        const zoomBox = e.target.closest(".option-zoom");
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const zoomBox = targetEl?.closest?.(".option-zoom");
         if (!zoomBox) return;
 
         const img = zoomBox.querySelector("img");
