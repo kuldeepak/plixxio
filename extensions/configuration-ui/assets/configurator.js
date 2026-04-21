@@ -136,7 +136,7 @@ function setupPopStateHandler() {
 
 async function loadConfiguration(productId) {
     try {
-        const response = await fetch(`https://employed-chen-advised-field.trycloudflare.com/api/public/configurator/${productId}?v=${Date.now()}`,
+        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app/api/public/configurator/${productId}?v=${Date.now()}`,
             { cache: 'no-store' });
         const data = await response.json();
 
@@ -156,7 +156,7 @@ async function loadConfiguration(productId) {
 
 async function calculatePrice(productId, selections, measurements, quantity) {
     try {
-        const response = await fetch(`https://employed-chen-advised-field.trycloudflare.com/api/public/calculate-price?v=${Date.now()}`, {
+        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app/api/public/calculate-price?v=${Date.now()}`, {
             method: 'POST',
             cache: 'no-store',
             headers: { 'Content-Type': 'application/json' },
@@ -1214,7 +1214,9 @@ if (PRODUCT_CONFIG) {
             const colorFromURL = params.get('color');
 
             await new Promise(resolve => setTimeout(resolve, 5000));
-
+            console.log('*****************************************');
+            console.log(state);
+            
             const cartResponse = await fetch('/cart/add.js', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
