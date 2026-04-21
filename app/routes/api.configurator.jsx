@@ -20,7 +20,7 @@ export const loader = async ({ request }) => {
     shopifyProductId: true,
     name: true,
     basePrice: true,
-    defaultVariantImage: true,   // 🔥 ADD THIS
+    defaultVariantImage: true,   
 
     steps: {
       include: {
@@ -62,7 +62,7 @@ const product = await prisma.product.findUnique({
     shopifyProductId: true,
     name: true,
     basePrice: true,
-    defaultVariantImage: true,   // 🔥 THIS IS THE FIX
+    defaultVariantImage: true,  
     
 
     steps: {
@@ -95,7 +95,7 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const actionType = formData.get("action");
 
-  console.log("API Action called:", actionType); // Debug log
+  console.log("API Action called:", actionType); 
 
   try {
     if (actionType === "createProduct") {
@@ -103,14 +103,14 @@ export const action = async ({ request }) => {
 
   const rawProductId = formData.get("shopifyProductId");
 
-// Shopify GraphQL ke liye gid format banana zaroori hai
+
 const shopifyProductGid = `gid://shopify/Product/${rawProductId}`;
   const name = formData.get("name");
   const basePrice = parseFloat(formData.get("basePrice") || 0);
 
   console.log("Creating product:", { shopifyProductGid, name, basePrice , defaultVariantImage});
 
-  // 🟢 STEP 1 — Shopify se FIRST VARIANT IMAGE fetch kar
+  
   let firstVariantImage = null;
 
   try {
@@ -144,7 +144,7 @@ const shopifyProductGid = `gid://shopify/Product/${rawProductId}`;
     console.log("Image fetch failed, using null");
   }
 
-  // 🟢 STEP 2 — DB me SAVE karo (IMPORTANT)
+  
  const product = await prisma.product.create({
   data: {
     shopifyProductId: rawProductId,   

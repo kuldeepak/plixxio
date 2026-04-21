@@ -643,7 +643,7 @@ if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
         const zoomThumb = document.querySelector('.zoom-thumb');
         if (zoomThumb) {
             zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
-            zoomThumb.setAttribute('data-url', defaultImg); // Zoom script aksar ye attribute read karta hai
+            zoomThumb.setAttribute('data-url', defaultImg); 
         }
 
         // 2. Zoom Preview update
@@ -652,8 +652,8 @@ if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
             zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
         }
 
-        // 3. Optional: Agar koi main image tag <img> hai preview ke liye
-        const mainImgTag = document.querySelector('.config-image-main'); // Apni class check karein
+        
+        const mainImgTag = document.querySelector('.config-image-main'); 
         if (mainImgTag) {
             mainImgTag.src = defaultImg;
         }

@@ -14,7 +14,7 @@ export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
   const DEMO_IMAGE =
-    "https://plixxo-de.myshopify.com/cdn/shop/files/1_Plissee_quarzgrau_Wohnzimmer-md.webp?v=1770817456&width=800"; // 👉 koi bhi public image
+    "https://plixxo-de.myshopify.com/cdn/shop/files/1_Plissee_quarzgrau_Wohnzimmer-md.webp?v=1770817456&width=800"; 
 
   /* -----------------------------------
   1️⃣ CREATE PRODUCT

@@ -24,11 +24,11 @@ export const action = async ({ request }) => {
   try {
     let rawInput = String(shopifyProductId || "").trim();
     
-    // 1. Numeric ID nikalna (Clean ID for DB)
-    // Agar input "gid://shopify/Product/12345" hai toh sirf "12345" lega
+    
+  
     const numericId = rawInput.replace(/[^0-9]/g, ""); 
 
-    // 2. GID banana (Only for Shopify GraphQL Query)
+    
     const graphqlId = `gid://shopify/Product/${numericId}`;
 
     if (!numericId) throw new Error("Invalid Shopify Product ID");

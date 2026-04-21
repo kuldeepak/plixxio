@@ -5,7 +5,6 @@ import { json } from "@remix-run/node";
 import prisma from "../db.server";
 
 export const loader = async ({ params }) => {
-    console.log('sfsdfsdfd',params);
     try {
         const productId = params.productId;
 

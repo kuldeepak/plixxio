@@ -19,6 +19,12 @@ const shopify = shopifyApp({
   future: {
     expiringOfflineAccessTokens: true,
   },
+    webhooks: {
+    PRODUCTS_UPDATE: {
+      deliveryMethod: "http",
+      callbackUrl: "/webhooks/products/update",
+    },
+  },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
