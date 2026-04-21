@@ -1025,8 +1025,7 @@ if (PRODUCT_CONFIG) {
     }
 
     document.addEventListener("mousemove", function (e) {
-        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
-        const zoomBox = targetEl?.closest?.(".option-zoom");
+        const zoomBox = e.target.closest(".option-zoom");
         if (!zoomBox) return;
 
         const img = zoomBox.querySelector("img");
@@ -1039,8 +1038,7 @@ if (PRODUCT_CONFIG) {
     });
 
     document.addEventListener("mouseleave", function (e) {
-        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
-        const zoomBox = targetEl?.closest?.(".option-zoom");
+        const zoomBox = e.target.closest(".option-zoom");
         if (!zoomBox) return;
 
         const img = zoomBox.querySelector("img");
@@ -1150,37 +1148,6 @@ if (PRODUCT_CONFIG) {
     // ============================================
     // ADD TO CART
     // ============================================
-    function buildShopifyLineItemProperties() {
-        const properties = {};
-
-        (PRODUCT_CONFIG?.steps || []).forEach(step => {
-            if (activeFlow.length && !activeFlow.includes(step.key)) return;
-
-            const cleanTitle = stripHTML(step.title);
-            if (!cleanTitle) return;
-            const propertyKey = `${cleanTitle}:`;
-
-            if (step.type === "measurement") {
-                const { breite, hoehe } = state.measurements || {};
-                if (breite && hoehe) properties[propertyKey] = `${breite} mm × ${hoehe} mm`;
-                return;
-            }
-
-            const selected = state.selections?.[step.key];
-            if (!selected) return;
-
-            let value = selected;
-            if (step.options) {
-                const opt = step.options.find(o => o.value === selected);
-                if (opt) value = opt.label ?? selected;
-            }
-
-            properties[propertyKey] = String(value);
-        });
-
-        return properties;
-    }
-
     async function addToCart() {
         if (!isConfigurationComplete()) {
             alert('Bitte vervollständigen Sie alle Schritte vor dem Hinzufügen zum Warenkorb');
@@ -1257,7 +1224,12 @@ if (PRODUCT_CONFIG) {
                         id: variantId,
                         quantity: state.menge,
                         properties: {
-                            ...buildShopifyLineItemProperties(),
+                            ...Object.fromEntries(
+                                Object.entries(state.selections).map(([key, value]) => [key, String(value)])
+                            ),
+                            ...Object.fromEntries(
+                                Object.entries(state.measurements).map(([key, value]) => [key, String(value)])
+                            ),
                             ...(colorFromURL ? { color: colorFromURL } : {}),
                             _url: fullURL
                         }
