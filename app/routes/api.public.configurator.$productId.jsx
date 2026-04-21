@@ -72,7 +72,7 @@ export const loader = async ({ params }) => {
             steps: product.steps.map(step => {
                 const stepData = {
                     key: step.key,
-                    type: step.type.toLowerCase(), // "OPTIONS" → "options"
+                    type: step.type, // "OPTIONS" → "options"
                     title: step.title,
                     subtitle: step.subtitle,
                     description: step.description,

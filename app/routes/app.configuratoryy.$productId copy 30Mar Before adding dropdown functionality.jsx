@@ -726,7 +726,7 @@ const handleStepDragEnd = (event) => {
                         <input
                           type="text"
                           value={stepFormData.key}
-                          onChange={(e) => setStepFormData({ ...stepFormData, key: e.target.value.toLowerCase().replace(/\s/g, '_') })}
+                          onChange={(e) => setStepFormData({ ...stepFormData, key: e.target.value.replace(/\s/g, '_') })}
                           placeholder="e.g., window_type"
                           required
                           style={{
@@ -1293,7 +1293,7 @@ const handleStepDragEnd = (event) => {
                                   <input
                                     type="text"
                                     value={optionFormData.value}
-                                    onChange={(e) => setOptionFormData({ ...optionFormData, value: e.target.value.toLowerCase().replace(/\s/g, '_') })}
+                                    onChange={(e) => setOptionFormData({ ...optionFormData, value: e.target.value.replace(/\s/g, '_') })}
                                     placeholder="e.g., standard_window"
                                     required
                                     style={{

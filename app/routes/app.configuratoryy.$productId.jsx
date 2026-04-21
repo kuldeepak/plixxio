@@ -963,7 +963,7 @@ export default function ConfigureProduct() {
                             setStepFormData({
                               ...stepFormData,
                               key: e.target.value
-                                .toLowerCase()
+                                
                                 .replace(/\s/g, "_"),
                             })
                           }
@@ -1897,7 +1897,7 @@ export default function ConfigureProduct() {
                                             setOptionFormData({
                                               ...optionFormData,
                                               value: e.target.value
-                                                .toLowerCase()
+                                                
                                                 .replace(/\s/g, "_"),
                                             })
                                           }
