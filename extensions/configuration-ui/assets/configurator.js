@@ -1215,97 +1215,26 @@ if (PRODUCT_CONFIG) {
 
             await new Promise(resolve => setTimeout(resolve, 5000));
 
-            // const cartResponse = await fetch('/cart/add.js', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({
-            //         items: [{
-            //             id: variantId,
-            //             quantity: state.menge,
-            //             properties: {
-            //                 ...Object.fromEntries(
-            //                     Object.entries(state.selections).map(([key, value]) => [key, String(value)])
-            //                 ),
-            //                 ...Object.fromEntries(
-            //                     Object.entries(state.measurements).map(([key, value]) => [key, String(value)])
-            //                 ),
-            //                 ...(colorFromURL ? { color: colorFromURL } : {}),
-            //                 _url: fullURL
-            //             }
-            //         }]
-            //     })
-            // });
-
-            // 🔥 CLEAN TITLE FUNCTION
-const cleanTitle = (title) => {
-    if (!title) return '';
-    const div = document.createElement("div");
-    div.innerHTML = title;
-    return (div.textContent || div.innerText || "").trim();
-};
-
-// 🔥 BUILD PROPERTIES (TITLE BASED)
-const properties = {};
-
-// ✅ selections → title
-Object.entries(state.selections).forEach(([stepKey, value]) => {
-    const step = PRODUCT_CONFIG.steps.find(s => s.key === stepKey);
-    if (!step) return;
-
-    const title = cleanTitle(step.title);
-    if (!title) return;
-
-    properties[title] = String(value);
-});
-
-// ✅ measurements → title
-Object.entries(state.measurements).forEach(([stepKey, value]) => {
-    const step = PRODUCT_CONFIG.steps.find(s => s.key === stepKey);
-    if (!step) return;
-
-    const title = cleanTitle(step.title);
-    if (!title) return;
-
-    properties[title] = String(value);
-});
-
-// ✅ URL color
-if (colorFromURL && !properties["Farbe"]) {
-    properties["Farbe"] = colorFromURL;
-}
-
-// ✅ hidden tracking
-properties["_url"] = fullURL;
-
-console.log("🛒 FINAL PROPERTIES:", properties);
-
-// 🔥 UPDATED CART CALL
-const cartResponse = await fetch('/cart/add.js', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        items: [{
-            id: variantId,
-            quantity: state.menge,
-            properties
-        }]
-    })
-});
-
-// ✅ SAFE RESPONSE (IMPORTANT FIX)
-const responseText = await cartResponse.text();
-console.log("🛒 Cart response:", responseText);
-
-if (!cartResponse.ok) {
-    throw new Error(responseText || "Add to cart failed");
-}
-
-let cartResult = {};
-try {
-    cartResult = responseText ? JSON.parse(responseText) : {};
-} catch (e) {
-    console.warn("Invalid JSON response");
-}
+            const cartResponse = await fetch('/cart/add.js', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: [{
+                        id: variantId,
+                        quantity: state.menge,
+                        properties: {
+                            ...Object.fromEntries(
+                                Object.entries(state.selections).map(([key, value]) => [key, String(value)])
+                            ),
+                            ...Object.fromEntries(
+                                Object.entries(state.measurements).map(([key, value]) => [key, String(value)])
+                            ),
+                            ...(colorFromURL ? { color: colorFromURL } : {}),
+                            _url: fullURL
+                        }
+                    }]
+                })
+            });
 
             if (!cartResponse.ok) {
                 const errorText = await cartResponse.text();
