@@ -1198,6 +1198,8 @@ console.log("MEASUREMENTS:", state.measurements);
 
             applyStateToUI(state);
 
+            console.log("FULL STEP:", vStep);
+
             // Re-trigger cascading dropdowns with saved state
             const groupContainers = document.querySelectorAll('[data-dropdown-group="true"] .step-content');
             groupContainers.forEach(container => {

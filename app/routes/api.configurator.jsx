@@ -169,6 +169,16 @@ const shopifyProductGid = `gid://shopify/Product/${rawProductId}`;
       const image = formData.get("image") || "";
       const order = parseInt(formData.get("order"));
 
+      const measurementMode = formData.get("measurementMode") || "NORMAL";
+
+const flugelMin = formData.get("flugelMin")
+  ? parseInt(formData.get("flugelMin"))
+  : null;
+
+const flugelMax = formData.get("flugelMax")
+  ? parseInt(formData.get("flugelMax"))
+  : null;
+
       const widthMin = formData.get("widthMin")
         ? parseInt(formData.get("widthMin"))
         : null;
@@ -196,6 +206,9 @@ const shopifyProductGid = `gid://shopify/Product/${rawProductId}`;
           widthMax,
           heightMin,
           heightMax,
+          measurementMode,
+  flugelMin,
+  flugelMax,
         },
       });
 
