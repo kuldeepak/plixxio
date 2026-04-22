@@ -508,7 +508,7 @@ function renderStepContents(config, virtualSteps) {
         //       </div>
         //     `;
         // }
-      if (vStep.type === "measurement") {
+  if (vStep.type === "measurement") {
 
   const mode = vStep.measurementMode || "NORMAL";
 
@@ -541,16 +541,35 @@ function renderStepContents(config, virtualSteps) {
       </select>
     </div>
 
-    <div class="measure-field flugel-fields" style="display:${mode === "FLUGEL" ? "block" : "none"};">
+    <div class="measure-field flugel-fields">
       <label>Flügel Minimum</label>
       <input type="number" name="flugelMin" value="${vStep.flugelMin || ''}">
     </div>
 
-    <div class="measure-field flugel-fields" style="display:${mode === "FLUGEL" ? "block" : "none"};">
+    <div class="measure-field flugel-fields">
       <label>Flügel Maximum</label>
       <input type="number" name="flugelMax" value="${vStep.flugelMax || ''}">
     </div>
   `;
+
+  // 🔥 INITIAL APPLY (IMPORTANT)
+  const applyFlugelVisibility = () => {
+    const modeSelect = document.querySelector('select[name="measurementMode"]');
+    if (!modeSelect) return;
+
+    const show = modeSelect.value === "FLUGEL";
+
+    content.querySelectorAll(".flugel-fields").forEach(el => {
+      el.style.display = show ? "block" : "none";
+    });
+  };
+
+  // run after render
+  setTimeout(applyFlugelVisibility, 0);
+
+  // 🔥 CHANGE EVENT (VERY IMPORTANT)
+  document.querySelector('select[name="measurementMode"]')
+    ?.addEventListener("change", applyFlugelVisibility);
 }
     });
 }
@@ -914,7 +933,7 @@ if (PRODUCT_CONFIG) {
         }
         if (e.target.name === "measurementMode") {
   const show = e.target.value === "FLUGEL";
-  document.querySelectorAll(".flugel-fields").forEach(el => {
+ content.querySelectorAll(".flugel-fields").forEach(el => {
     el.style.display = show ? "block" : "none";
   });
 }
@@ -1205,10 +1224,10 @@ console.log("MEASUREMENTS:", state.measurements);
             applyStateToUI(state);
 
             // 👇 Apply measurement mode UI on load
-const modeSelect = document.querySelector('select[name="measurementMode"]');
+const modeSelect = content.querySelector('select[name="measurementMode"]');
 if (modeSelect) {
   const show = modeSelect.value === "FLUGEL";
-  document.querySelectorAll(".flugel-fields").forEach(el => {
+  content.querySelectorAll(".flugel-fields").forEach(el => {
     el.style.display = show ? "block" : "none";
   });
 }
