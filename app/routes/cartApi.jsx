@@ -54,7 +54,7 @@ export const action = async ({ request }) => {
       quantity,
       calculatedPrice,
       baseProductTitle,
-      productImage, // Optional: custom image URL
+      productImage, 
     } = body;
 
     if (!productId) {

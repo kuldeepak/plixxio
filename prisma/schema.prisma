@@ -75,6 +75,12 @@ model ConfigurationStep {
   widthMax    Int?
   heightMin   Int?
   heightMax   Int?
+
+   //  NEW (IMPORTANT)
+  measurementMode String?   // "NORMAL" | "FLUGELHOHE"
+  flugelMin       Int?
+  flugelMax       Int?
+
   
   // Relations
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)

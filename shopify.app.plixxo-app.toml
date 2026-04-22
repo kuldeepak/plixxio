@@ -1,6 +1,6 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "5683f1c6f7d96655f44824596125b904"
+client_id = "25e8a3d82b3f9dc31ca13160286ba744"
 name = "plixxo-app"
 application_url = "https://plixxo-app-tvhmp.ondigitalocean.app"
 embedded = true
