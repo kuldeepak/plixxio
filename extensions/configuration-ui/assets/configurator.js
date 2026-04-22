@@ -156,7 +156,7 @@ async function loadConfiguration(productId) {
 
 async function calculatePrice(productId, selections, measurements, quantity) {
     try {
-        const response = await fetch(`https://plixxo-app-tvhmp.ondigitalocean.app/api/public/calculate-price?v=${Date.now()}`, {
+        const response = await fetch(`https://through-past-flour-ministries.trycloudflare.com/api/public/calculate-price?v=${Date.now()}`, {
             method: 'POST',
             cache: 'no-store',
             headers: { 'Content-Type': 'application/json' },
