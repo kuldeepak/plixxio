@@ -1029,9 +1029,18 @@ console.log("MEASUREMENTS:", state.measurements);
             let value = "—";
 
             if (key === "masse") {
-                const { breite, hoehe } = state.measurements || {};
-                if (breite && hoehe) value = `${breite} mm × ${hoehe} mm`;
-            } else {
+    const { breite, hoehe, measurementMode, flugelMin, flugelMax } = state.measurements || {};
+
+    if (measurementMode === "FLUGEL") {
+        if (breite && hoehe && flugelMin && flugelMax) {
+            value = `${breite} × ${hoehe} mm (Flügel: ${flugelMin}–${flugelMax} mm)`;
+        }
+    } else {
+        if (breite && hoehe) {
+            value = `${breite} × ${hoehe} mm`;
+        }
+    }
+} else {
                 const selected = state.selections?.[key];
                 if (selected) {
                     const step = PRODUCT_CONFIG.steps.find(s => s.key === key);
@@ -1247,10 +1256,20 @@ if (modeSelect) {
             const propertyKey = `${cleanTitle}:`;
 
             if (step.type === "measurement") {
-                const { breite, hoehe } = state.measurements || {};
-                if (breite && hoehe) properties[propertyKey] = `${breite} mm × ${hoehe} mm`;
-                return;
-            }
+    const { breite, hoehe, measurementMode, flugelMin, flugelMax } = state.measurements || {};
+
+    if (measurementMode === "FLUGEL") {
+        if (breite && hoehe && flugelMin && flugelMax) {
+            properties[propertyKey] =
+                `${breite} × ${hoehe} mm | Flügel: ${flugelMin}–${flugelMax} mm`;
+        }
+    } else {
+        if (breite && hoehe) {
+            properties[propertyKey] = `${breite} × ${hoehe} mm`;
+        }
+    }
+    return;
+}
 
             const selected = state.selections?.[step.key];
             if (!selected) return;
