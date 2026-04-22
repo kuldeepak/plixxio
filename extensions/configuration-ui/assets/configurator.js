@@ -1214,8 +1214,7 @@ if (PRODUCT_CONFIG) {
             const colorFromURL = params.get('color');
 
             await new Promise(resolve => setTimeout(resolve, 5000));
-            
-            
+
             const cartResponse = await fetch('/cart/add.js', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
