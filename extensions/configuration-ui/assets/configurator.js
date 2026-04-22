@@ -481,33 +481,74 @@ function renderStepContents(config, virtualSteps) {
             renderOptions(vStep, content);
         }
 
-        if (vStep.type === "measurement") {
-            content.innerHTML = `
-              <div class="measure-field">
-                <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
-                <input
-                  type="number"
-                  name="breite"
-                  placeholder="Breite in mm"
-                  data-min="${vStep.width.min}"
-                  data-max="${vStep.width.max}"
-                >
-                <div class="measure-error" data-error-for="breite"></div>
-              </div>
+        // if (vStep.type === "measurement") {
+        //     content.innerHTML = `
+        //       <div class="measure-field">
+        //         <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
+        //         <input
+        //           type="number"
+        //           name="breite"
+        //           placeholder="Breite in mm"
+        //           data-min="${vStep.width.min}"
+        //           data-max="${vStep.width.max}"
+        //         >
+        //         <div class="measure-error" data-error-for="breite"></div>
+        //       </div>
           
-              <div class="measure-field">
-                <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
-                <input
-                  type="number"
-                  name="hoehe"
-                  placeholder="Höhe in mm"
-                  data-min="${vStep.height.min}"
-                  data-max="${vStep.height.max}"
-                >
-                <div class="measure-error" data-error-for="hoehe"></div>
-              </div>
-            `;
-        }
+        //       <div class="measure-field">
+        //         <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
+        //         <input
+        //           type="number"
+        //           name="hoehe"
+        //           placeholder="Höhe in mm"
+        //           data-min="${vStep.height.min}"
+        //           data-max="${vStep.height.max}"
+        //         >
+        //         <div class="measure-error" data-error-for="hoehe"></div>
+        //       </div>
+        //     `;
+        // }
+        if (vStep.type === "measurement") {
+  content.innerHTML = `
+    <div class="measure-field">
+      <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
+      <input
+        type="number"
+        name="breite"
+        data-min="${vStep.width.min}"
+        data-max="${vStep.width.max}"
+      >
+    </div>
+
+    <div class="measure-field">
+      <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
+      <input
+        type="number"
+        name="hoehe"
+        data-min="${vStep.height.min}"
+        data-max="${vStep.height.max}"
+      >
+    </div>
+
+    <div class="measure-field">
+      <label>Measurement Mode</label>
+      <select name="measurementMode">
+        <option value="NORMAL">Normal</option>
+        <option value="FLUGEL">Flügel</option>
+      </select>
+    </div>
+
+    <div class="measure-field flugel-fields" style="display:none;">
+      <label>Flügel Minimum</label>
+      <input type="number" name="flugelMin">
+    </div>
+
+    <div class="measure-field flugel-fields" style="display:none;">
+      <label>Flügel Maximum</label>
+      <input type="number" name="flugelMax">
+    </div>
+  `;
+}
     });
 }
 
@@ -868,6 +909,12 @@ if (PRODUCT_CONFIG) {
         if (input.type === "radio") {
             handleDependencies(input.name, input.value);
         }
+        if (e.target.name === "measurementMode") {
+  const show = e.target.value === "FLUGEL";
+  document.querySelectorAll(".flugel-fields").forEach(el => {
+    el.style.display = show ? "block" : "none";
+  });
+}
 
         updateSummaryAlt();
         renderFinalStep();
@@ -878,14 +925,31 @@ if (PRODUCT_CONFIG) {
     /* =====================================================
        HELPERS
     ===================================================== */
+    // function saveState(input) {
+    //     if (input.type === "radio" || input.tagName === "SELECT") {
+    //         state.selections[input.name] = input.value;
+    //     }
+    //     if (input.type === "number") {
+    //         state.measurements[input.name] = Number(input.value);
+    //     }
+    // }
+
     function saveState(input) {
-        if (input.type === "radio" || input.tagName === "SELECT") {
-            state.selections[input.name] = input.value;
-        }
-        if (input.type === "number") {
-            state.measurements[input.name] = Number(input.value);
-        }
-    }
+  if (input.type === "radio" || input.tagName === "SELECT") {
+    state.selections[input.name] = input.value;
+  }
+
+  if (input.type === "number") {
+    state.measurements[input.name] = Number(input.value);
+  }
+
+  // 👇 ADD THIS
+  if (input.name === "measurementMode") {
+    state.measurements.measurementMode = input.value;
+  }
+}
+
+console.log("MEASUREMENTS:", state.measurements);
 
     async function updatePrices() {
         const subtotalEl = document.querySelector(".summary-price b");
