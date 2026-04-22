@@ -766,7 +766,7 @@ if (PRODUCT_CONFIG) {
       .join(', ');
 }
 
-    let activeFlow = [];
+    let activeFlow = PRODUCT_CONFIG.steps.map(s => s.key);
     let currentStepIndex = 0;
     window._getActiveFlow = () => activeFlow;
 
