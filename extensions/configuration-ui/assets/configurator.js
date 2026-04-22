@@ -14,6 +14,19 @@ let state = {
     menge: 1
 };
 
+function closest(target, selector) {
+    if (!target) return null;
+
+    // handle text nodes, svg nodes, etc.
+    const el = target instanceof Element
+        ? target
+        : target.parentElement;
+
+    if (!el || !el.closest) return null;
+
+    return el.closest(selector);
+}
+
 /* =====================================================
    URL STATE MANAGEMENT
 ===================================================== */
@@ -1025,7 +1038,8 @@ if (PRODUCT_CONFIG) {
     }
 
     document.addEventListener("mousemove", function (e) {
-        const zoomBox = e.target.closest(".option-zoom");
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const zoomBox = targetEl?.closest?.(".option-zoom");
         if (!zoomBox) return;
 
         const img = zoomBox.querySelector("img");
@@ -1038,7 +1052,8 @@ if (PRODUCT_CONFIG) {
     });
 
     document.addEventListener("mouseleave", function (e) {
-        const zoomBox = e.target.closest(".option-zoom");
+        const targetEl = e.target instanceof Element ? e.target : e.target?.parentElement;
+        const zoomBox = targetEl?.closest?.(".option-zoom");
         if (!zoomBox) return;
 
         const img = zoomBox.querySelector("img");
@@ -1148,6 +1163,37 @@ if (PRODUCT_CONFIG) {
     // ============================================
     // ADD TO CART
     // ============================================
+    function buildShopifyLineItemProperties() {
+        const properties = {};
+
+        (PRODUCT_CONFIG?.steps || []).forEach(step => {
+            if (activeFlow.length && !activeFlow.includes(step.key)) return;
+
+            const cleanTitle = stripHTML(step.title);
+            if (!cleanTitle) return;
+            const propertyKey = `${cleanTitle}:`;
+
+            if (step.type === "measurement") {
+                const { breite, hoehe } = state.measurements || {};
+                if (breite && hoehe) properties[propertyKey] = `${breite} mm × ${hoehe} mm`;
+                return;
+            }
+
+            const selected = state.selections?.[step.key];
+            if (!selected) return;
+
+            let value = selected;
+            if (step.options) {
+                const opt = step.options.find(o => o.value === selected);
+                if (opt) value = opt.label ?? selected;
+            }
+
+            properties[propertyKey] = String(value);
+        });
+
+        return properties;
+    }
+
     async function addToCart() {
         if (!isConfigurationComplete()) {
             alert('Bitte vervollständigen Sie alle Schritte vor dem Hinzufügen zum Warenkorb');
@@ -1214,7 +1260,8 @@ if (PRODUCT_CONFIG) {
             const colorFromURL = params.get('color');
 
             await new Promise(resolve => setTimeout(resolve, 5000));
-
+            
+            
             const cartResponse = await fetch('/cart/add.js', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1223,12 +1270,7 @@ if (PRODUCT_CONFIG) {
                         id: variantId,
                         quantity: state.menge,
                         properties: {
-                            ...Object.fromEntries(
-                                Object.entries(state.selections).map(([key, value]) => [key, String(value)])
-                            ),
-                            ...Object.fromEntries(
-                                Object.entries(state.measurements).map(([key, value]) => [key, String(value)])
-                            ),
+                            ...buildShopifyLineItemProperties(),
                             ...(colorFromURL ? { color: colorFromURL } : {}),
                             _url: fullURL
                         }
