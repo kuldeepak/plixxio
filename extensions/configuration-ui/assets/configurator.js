@@ -14,19 +14,6 @@ let state = {
     menge: 1
 };
 
-function closest(target, selector) {
-    if (!target) return null;
-
-    // handle text nodes, svg nodes, etc.
-    const el = target instanceof Element
-        ? target
-        : target.parentElement;
-
-    if (!el || !el.closest) return null;
-
-    return el.closest(selector);
-}
-
 /* =====================================================
    URL STATE MANAGEMENT
 ===================================================== */
@@ -80,7 +67,7 @@ function loadStateFromURL() {
     for (const [key, value] of params.entries()) {
         if (key.startsWith('sel_')) {
             const actualKey = key.replace('sel_', '');
-            urlState.selections[actualKey] = value;
+            urlState.selections[actualKey] = value.toLowerCase();
         }
     }
 
@@ -210,6 +197,9 @@ function onDropdownGroupChange() {
      - all others: the original step object
 ===================================================== */
 function groupSteps(steps) {
+        steps.forEach(step => {
+        step.type = step.type?.toLowerCase();
+    });
     const groups = [];
     let i = 0;
 
