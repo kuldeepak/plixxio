@@ -72,11 +72,16 @@ function loadStateFromURL() {
     }
 
     for (const [key, value] of params.entries()) {
-        if (key.startsWith('m_')) {
-            const actualKey = key.replace('m_', '');
+    if (key.startsWith('m_')) {
+        const actualKey = key.replace('m_', '');
+
+        if (actualKey === "measurementMode") {
+            urlState.measurements[actualKey] = value; // keep string
+        } else {
             urlState.measurements[actualKey] = Number(value);
         }
     }
+}
 
     const qty = params.get('qty');
     if (qty) {
@@ -510,7 +515,10 @@ function renderStepContents(config, virtualSteps) {
         // }
  if (vStep.type === "measurement") {
 
-  const mode = vStep.measurementMode || "NORMAL";
+  const mode =
+  state.measurements.measurementMode ||
+  vStep.measurementMode ||
+  "NORMAL";
 
   content.innerHTML = `
     <div class="measure-field">
@@ -537,17 +545,97 @@ function renderStepContents(config, virtualSteps) {
 
     <div class="measure-field flugel-fields">
       <label>Flügel Minimum</label>
-      <input type="number" name="flugelMin" value="${vStep.flugelMin || ''}">
+     <input type="number" name="flugelMin"
+  value="${state.measurements.flugelMin || vStep.flugelMin || ''}">
+
     </div>
 
     <div class="measure-field flugel-fields">
       <label>Flügel Maximum</label>
-      <input type="number" name="flugelMax" value="${vStep.flugelMax || ''}">
+      <input type="number" name="flugelMax"
+  value="${state.measurements.flugelMax || vStep.flugelMax || ''}">
     </div>
   `;
 
+ if (vStep.type === "measurement") {
+
+  const mode =
+    state.measurements.measurementMode ||
+    vStep.measurementMode ||
+    "NORMAL";
+
+  content.innerHTML = `
+    <div class="measure-field">
+      <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
+      <input type="number" name="breite"
+        data-min="${vStep.width.min}"
+        data-max="${vStep.width.max}">
+    </div>
+
+    <div class="measure-field">
+      <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
+      <input type="number" name="hoehe"
+        data-min="${vStep.height.min}"
+        data-max="${vStep.height.max}">
+    </div>
+
+    <div class="measure-field">
+      <label>Measurement Mode</label>
+      <select name="measurementMode">
+        <option value="NORMAL" ${mode === "NORMAL" ? "selected" : ""}>Normal</option>
+        <option value="FLUGEL" ${mode === "FLUGEL" ? "selected" : ""}>Flügel</option>
+      </select>
+    </div>
+
+    <div class="measure-field flugel-fields">
+      <label>Flügel Minimum</label>
+      <input type="number" name="flugelMin"
+        value="${state.measurements.flugelMin || vStep.flugelMin || ''}">
+    </div>
+
+    <div class="measure-field flugel-fields">
+      <label>Flügel Maximum</label>
+      <input type="number" name="flugelMax"
+        value="${state.measurements.flugelMax || vStep.flugelMax || ''}">
+    </div>
+  `;
+
+  // ✅ FIX: DEFINE modeSelect FIRST
   const modeSelect = content.querySelector('select[name="measurementMode"]');
 
+  const toggle = () => {
+    const show = modeSelect.value === "FLUGEL";
+    content.querySelectorAll(".flugel-fields").forEach(el => {
+      el.style.display = show ? "block" : "none";
+    });
+  };
+
+  // ✅ INITIAL RUN
+  toggle();
+
+  // ✅ CHANGE HANDLER
+  modeSelect.onchange = (e) => {
+    toggle();
+
+    state.measurements.measurementMode = e.target.value;
+
+    if (e.target.value !== "FLUGEL") {
+      delete state.measurements.flugelMin;
+      delete state.measurements.flugelMax;
+
+      const minInput = content.querySelector('input[name="flugelMin"]');
+      const maxInput = content.querySelector('input[name="flugelMax"]');
+
+      if (minInput) minInput.value = "";
+      if (maxInput) maxInput.value = "";
+    }
+
+    updateSummaryAlt();
+    renderFinalStep();
+    updatePrices();
+    updateURL();
+  };
+}
   const toggle = () => {
     const show = modeSelect.value === "FLUGEL";
     content.querySelectorAll(".flugel-fields").forEach(el => {
