@@ -101,6 +101,9 @@ export const loader = async ({ params }) => {
                         min: step.heightMin,
                         max: step.heightMax,
                     };
+                    stepData.measurementMode = step.measurementMode;
+    stepData.flugelMin = step.flugelMin;
+    stepData.flugelMax = step.flugelMax;
                 }
 
                 return stepData;

@@ -78,6 +78,9 @@ export const action = async ({ request }) => {
               widthMax: step.widthMax,
               heightMin: step.heightMin,
               heightMax: step.heightMax,
+              measurementMode: step.measurementMode,
+flugelMin: step.flugelMin,
+flugelMax: step.flugelMax,
 
               options: {
                 create: step.options.map((option) => ({
