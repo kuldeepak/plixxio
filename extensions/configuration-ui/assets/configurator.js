@@ -508,29 +508,23 @@ function renderStepContents(config, virtualSteps) {
         //       </div>
         //     `;
         // }
-  if (vStep.type === "measurement") {
+ if (vStep.type === "measurement") {
 
   const mode = vStep.measurementMode || "NORMAL";
 
   content.innerHTML = `
     <div class="measure-field">
       <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
-      <input
-        type="number"
-        name="breite"
+      <input type="number" name="breite"
         data-min="${vStep.width.min}"
-        data-max="${vStep.width.max}"
-      >
+        data-max="${vStep.width.max}">
     </div>
 
     <div class="measure-field">
       <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
-      <input
-        type="number"
-        name="hoehe"
+      <input type="number" name="hoehe"
         data-min="${vStep.height.min}"
-        data-max="${vStep.height.max}"
-      >
+        data-max="${vStep.height.max}">
     </div>
 
     <div class="measure-field">
@@ -552,24 +546,17 @@ function renderStepContents(config, virtualSteps) {
     </div>
   `;
 
-  // 🔥 INITIAL APPLY (IMPORTANT)
-  const applyFlugelVisibility = () => {
-    const modeSelect = document.querySelector('select[name="measurementMode"]');
-    if (!modeSelect) return;
+  const modeSelect = content.querySelector('select[name="measurementMode"]');
 
+  const toggle = () => {
     const show = modeSelect.value === "FLUGEL";
-
     content.querySelectorAll(".flugel-fields").forEach(el => {
       el.style.display = show ? "block" : "none";
     });
   };
 
-  // run after render
-  setTimeout(applyFlugelVisibility, 0);
-
-  // 🔥 CHANGE EVENT (VERY IMPORTANT)
-  document.querySelector('select[name="measurementMode"]')
-    ?.addEventListener("change", applyFlugelVisibility);
+  toggle(); // initial
+  modeSelect.onchange = toggle;
 }
     });
 }
@@ -931,12 +918,7 @@ if (PRODUCT_CONFIG) {
         if (input.type === "radio") {
             handleDependencies(input.name, input.value);
         }
-        if (e.target.name === "measurementMode") {
-  const show = e.target.value === "FLUGEL";
- content.querySelectorAll(".flugel-fields").forEach(el => {
-    el.style.display = show ? "block" : "none";
-  });
-}
+  
 
         updateSummaryAlt();
         renderFinalStep();
@@ -1224,13 +1206,14 @@ console.log("MEASUREMENTS:", state.measurements);
             applyStateToUI(state);
 
             // 👇 Apply measurement mode UI on load
-const modeSelect = content.querySelector('select[name="measurementMode"]');
+const modeSelect = document.querySelector('select[name="measurementMode"]');
 if (modeSelect) {
   const show = modeSelect.value === "FLUGEL";
-  content.querySelectorAll(".flugel-fields").forEach(el => {
+  document.querySelectorAll(".flugel-fields").forEach(el => {
     el.style.display = show ? "block" : "none";
   });
 }
+
 
             
 
