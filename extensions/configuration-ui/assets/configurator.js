@@ -508,7 +508,10 @@ function renderStepContents(config, virtualSteps) {
         //       </div>
         //     `;
         // }
-        if (vStep.type === "measurement") {
+      if (vStep.type === "measurement") {
+
+  const mode = vStep.measurementMode || "NORMAL";
+
   content.innerHTML = `
     <div class="measure-field">
       <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
@@ -533,19 +536,19 @@ function renderStepContents(config, virtualSteps) {
     <div class="measure-field">
       <label>Measurement Mode</label>
       <select name="measurementMode">
-        <option value="NORMAL">Normal</option>
-        <option value="FLUGEL">Flügel</option>
+        <option value="NORMAL" ${mode === "NORMAL" ? "selected" : ""}>Normal</option>
+        <option value="FLUGEL" ${mode === "FLUGEL" ? "selected" : ""}>Flügel</option>
       </select>
     </div>
 
-    <div class="measure-field flugel-fields" style="display:none;">
+    <div class="measure-field flugel-fields" style="display:${mode === "FLUGEL" ? "block" : "none"};">
       <label>Flügel Minimum</label>
-      <input type="number" name="flugelMin">
+      <input type="number" name="flugelMin" value="${vStep.flugelMin || ''}">
     </div>
 
-    <div class="measure-field flugel-fields" style="display:none;">
+    <div class="measure-field flugel-fields" style="display:${mode === "FLUGEL" ? "block" : "none"};">
       <label>Flügel Maximum</label>
-      <input type="number" name="flugelMax">
+      <input type="number" name="flugelMax" value="${vStep.flugelMax || ''}">
     </div>
   `;
 }
@@ -934,7 +937,7 @@ if (PRODUCT_CONFIG) {
     //     }
     // }
 
-    function saveState(input) {
+   function saveState(input) {
   if (input.type === "radio" || input.tagName === "SELECT") {
     state.selections[input.name] = input.value;
   }
@@ -943,9 +946,12 @@ if (PRODUCT_CONFIG) {
     state.measurements[input.name] = Number(input.value);
   }
 
-  // 👇 ADD THIS
   if (input.name === "measurementMode") {
     state.measurements.measurementMode = input.value;
+  }
+
+  if (input.name === "flugelMin" || input.name === "flugelMax") {
+    state.measurements[input.name] = Number(input.value);
   }
 }
 
@@ -1198,7 +1204,16 @@ console.log("MEASUREMENTS:", state.measurements);
 
             applyStateToUI(state);
 
-            console.log("FULL STEP:", vStep);
+            // 👇 Apply measurement mode UI on load
+const modeSelect = document.querySelector('select[name="measurementMode"]');
+if (modeSelect) {
+  const show = modeSelect.value === "FLUGEL";
+  document.querySelectorAll(".flugel-fields").forEach(el => {
+    el.style.display = show ? "block" : "none";
+  });
+}
+
+            
 
             // Re-trigger cascading dropdowns with saved state
             const groupContainers = document.querySelectorAll('[data-dropdown-group="true"] .step-content');
