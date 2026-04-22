@@ -513,51 +513,7 @@ function renderStepContents(config, virtualSteps) {
         //       </div>
         //     `;
         // }
- if (vStep.type === "measurement") {
-
-  const mode =
-  state.measurements.measurementMode ||
-  vStep.measurementMode ||
-  "NORMAL";
-
-  content.innerHTML = `
-    <div class="measure-field">
-      <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
-      <input type="number" name="breite"
-        data-min="${vStep.width.min}"
-        data-max="${vStep.width.max}">
-    </div>
-
-    <div class="measure-field">
-      <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
-      <input type="number" name="hoehe"
-        data-min="${vStep.height.min}"
-        data-max="${vStep.height.max}">
-    </div>
-
-    <div class="measure-field">
-      <label>Measurement Mode</label>
-      <select name="measurementMode">
-        <option value="NORMAL" ${mode === "NORMAL" ? "selected" : ""}>Normal</option>
-        <option value="FLUGEL" ${mode === "FLUGEL" ? "selected" : ""}>Flügel</option>
-      </select>
-    </div>
-
-    <div class="measure-field flugel-fields">
-      <label>Flügel Minimum</label>
-     <input type="number" name="flugelMin"
-  value="${state.measurements.flugelMin || vStep.flugelMin || ''}">
-
-    </div>
-
-    <div class="measure-field flugel-fields">
-      <label>Flügel Maximum</label>
-      <input type="number" name="flugelMax"
-  value="${state.measurements.flugelMax || vStep.flugelMax || ''}">
-    </div>
-  `;
-
- if (vStep.type === "measurement") {
+if (vStep.type === "measurement") {
 
   const mode =
     state.measurements.measurementMode ||
@@ -600,7 +556,6 @@ function renderStepContents(config, virtualSteps) {
     </div>
   `;
 
-  // ✅ FIX: DEFINE modeSelect FIRST
   const modeSelect = content.querySelector('select[name="measurementMode"]');
 
   const toggle = () => {
@@ -610,10 +565,10 @@ function renderStepContents(config, virtualSteps) {
     });
   };
 
-  // ✅ INITIAL RUN
+  // initial run
   toggle();
 
-  // ✅ CHANGE HANDLER
+  // change event
   modeSelect.onchange = (e) => {
     toggle();
 
@@ -623,11 +578,8 @@ function renderStepContents(config, virtualSteps) {
       delete state.measurements.flugelMin;
       delete state.measurements.flugelMax;
 
-      const minInput = content.querySelector('input[name="flugelMin"]');
-      const maxInput = content.querySelector('input[name="flugelMax"]');
-
-      if (minInput) minInput.value = "";
-      if (maxInput) maxInput.value = "";
+      content.querySelector('input[name="flugelMin"]').value = "";
+      content.querySelector('input[name="flugelMax"]').value = "";
     }
 
     updateSummaryAlt();
@@ -635,16 +587,6 @@ function renderStepContents(config, virtualSteps) {
     updatePrices();
     updateURL();
   };
-}
-  const toggle = () => {
-    const show = modeSelect.value === "FLUGEL";
-    content.querySelectorAll(".flugel-fields").forEach(el => {
-      el.style.display = show ? "block" : "none";
-    });
-  };
-
-  toggle(); // initial
-  modeSelect.onchange = toggle;
 }
     });
 }
