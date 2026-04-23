@@ -51,11 +51,13 @@ function updateURL() {
         newURL
     );
 }
+
 function decodeHTML(html) {
-  const txt = document.createElement("textarea");
-  txt.innerHTML = html;
-  return txt.value;
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
 }
+
 function loadStateFromURL() {
     const params = new URLSearchParams(window.location.search);
     const urlState = {
@@ -72,16 +74,11 @@ function loadStateFromURL() {
     }
 
     for (const [key, value] of params.entries()) {
-    if (key.startsWith('m_')) {
-        const actualKey = key.replace('m_', '');
-
-        if (actualKey === "measurementMode") {
-            urlState.measurements[actualKey] = value; // keep string
-        } else {
+        if (key.startsWith('m_')) {
+            const actualKey = key.replace('m_', '');
             urlState.measurements[actualKey] = Number(value);
         }
     }
-}
 
     const qty = params.get('qty');
     if (qty) {
@@ -202,7 +199,7 @@ function onDropdownGroupChange() {
      - all others: the original step object
 ===================================================== */
 function groupSteps(steps) {
-        steps.forEach(step => {
+    steps.forEach(step => {
         step.type = step.type?.toLowerCase();
     });
     const groups = [];
@@ -225,8 +222,6 @@ function groupSteps(steps) {
 
     return groups;
 }
-
-
 
 /* =====================================================
    STEP GENERATION
@@ -390,28 +385,6 @@ function renderSingleDropdownInGroup(groupStepsList, container, index, urlKeys =
     });
 }
 
-// function renderOptions(step, container) {
-//     const sortedOptions = [...step.options]
-//         .map(opt => ({ ...opt, order: parseInt(opt.order) || 0 }))
-//         .sort((a, b) => a.order - b.order);
-
-//     sortedOptions.forEach(opt => {
-//         container.insertAdjacentHTML("beforeend", `
-//         <label class="option-card">
-//           <div class="option-title">
-//             <input type="radio" name="${step.key}" value="${opt.value}">
-//             <div class="option-title1">
-//               ${opt.label}
-//               <span class="option-price">
-//                 (${opt.price > 0 ? "+" : ""}${opt.price} €)
-//               </span>
-//             </div>
-//           </div>
-//         </label>
-//       `);
-//     });
-// }
-
 function renderOptions(step, container) {
     const sortedOptions = [...step.options]
         .map(opt => ({
@@ -486,108 +459,55 @@ function renderStepContents(config, virtualSteps) {
             renderOptions(vStep, content);
         }
 
-        // if (vStep.type === "measurement") {
-        //     content.innerHTML = `
-        //       <div class="measure-field">
-        //         <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
-        //         <input
-        //           type="number"
-        //           name="breite"
-        //           placeholder="Breite in mm"
-        //           data-min="${vStep.width.min}"
-        //           data-max="${vStep.width.max}"
-        //         >
-        //         <div class="measure-error" data-error-for="breite"></div>
-        //       </div>
+        // UPDATED: Measurement with conditional Flügel field
+        if (vStep.type === "measurement") {
+            const hasFlugel = vStep.measurementMode && vStep.measurementMode.toUpperCase() === 'FLUGEL';
+            
+            let html = `
+              <div class="measure-field">
+                <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
+                <input
+                  type="number"
+                  name="breite"
+                  placeholder="Breite in mm"
+                  data-min="${vStep.width.min}"
+                  data-max="${vStep.width.max}"
+                >
+                <div class="measure-error" data-error-for="breite"></div>
+              </div>
           
-        //       <div class="measure-field">
-        //         <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
-        //         <input
-        //           type="number"
-        //           name="hoehe"
-        //           placeholder="Höhe in mm"
-        //           data-min="${vStep.height.min}"
-        //           data-max="${vStep.height.max}"
-        //         >
-        //         <div class="measure-error" data-error-for="hoehe"></div>
-        //       </div>
-        //     `;
-        // }
-if (vStep.type === "measurement") {
+              <div class="measure-field">
+                <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
+                <input
+                  type="number"
+                  name="hoehe"
+                  placeholder="Höhe in mm"
+                  data-min="${vStep.height.min}"
+                  data-max="${vStep.height.max}"
+                >
+                <div class="measure-error" data-error-for="hoehe"></div>
+              </div>
+            `;
 
-  const mode =
-    state.measurements.measurementMode ||
-    vStep.measurementMode ||
-    "NORMAL";
+            // Conditionally add Flügel field
+            if (hasFlugel) {
+                html += `
+              <div class="measure-field">
+                <label>Flügel (${vStep.flugelMin} – ${vStep.flugelMax} mm)</label>
+                <input
+                  type="number"
+                  name="flugel"
+                  placeholder="Flügel in mm"
+                  data-min="${vStep.flugelMin}"
+                  data-max="${vStep.flugelMax}"
+                >
+                <div class="measure-error" data-error-for="flugel"></div>
+              </div>
+                `;
+            }
 
-  content.innerHTML = `
-    <div class="measure-field">
-      <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
-      <input type="number" name="breite"
-        data-min="${vStep.width.min}"
-        data-max="${vStep.width.max}">
-    </div>
-
-    <div class="measure-field">
-      <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
-      <input type="number" name="hoehe"
-        data-min="${vStep.height.min}"
-        data-max="${vStep.height.max}">
-    </div>
-
-    <div class="measure-field">
-      <label>Measurement Mode</label>
-      <select name="measurementMode">
-        <option value="NORMAL" ${mode === "NORMAL" ? "selected" : ""}>Normal</option>
-        <option value="FLUGEL" ${mode === "FLUGEL" ? "selected" : ""}>Flügel</option>
-      </select>
-    </div>
-
-    <div class="measure-field flugel-fields">
-      <label>Flügel Minimum</label>
-      <input type="number" name="flugelMin"
-        value="${state.measurements.flugelMin || vStep.flugelMin || ''}">
-    </div>
-
-    <div class="measure-field flugel-fields">
-      <label>Flügel Maximum</label>
-      <input type="number" name="flugelMax"
-        value="${state.measurements.flugelMax || vStep.flugelMax || ''}">
-    </div>
-  `;
-
-  const modeSelect = content.querySelector('select[name="measurementMode"]');
-
-  const toggle = () => {
-    const show = modeSelect.value === "FLUGEL";
-    content.querySelectorAll(".flugel-fields").forEach(el => {
-      el.style.display = show ? "block" : "none";
-    });
-  };
-
-  // initial run
-  toggle();
-
-  // change event
-  modeSelect.onchange = (e) => {
-    toggle();
-
-    state.measurements.measurementMode = e.target.value;
-
-    if (e.target.value !== "FLUGEL") {
-      delete state.measurements.flugelMin;
-      delete state.measurements.flugelMax;
-
-      content.querySelector('input[name="flugelMin"]').value = "";
-      content.querySelector('input[name="flugelMax"]').value = "";
-    }
-
-    updateSummaryAlt();
-    renderFinalStep();
-    updatePrices();
-    updateURL();
-  };
-}
+            content.innerHTML = html;
+        }
     });
 }
 
@@ -679,19 +599,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const defaultImg = PRODUCT_CONFIG?.product?.defaultVariantImage;
 
-if (defaultImg) {
-    const zoomThumb = document.querySelector('.zoom-thumb');
-    const zoomPreview = document.querySelector('.zoom-preview');
+        if (defaultImg) {
+            const zoomThumb = document.querySelector('.zoom-thumb');
+            const zoomPreview = document.querySelector('.zoom-preview');
 
-    if (zoomThumb) {
-        zoomThumb.setAttribute('data-url', defaultImg);
-        zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
-    }
+            if (zoomThumb) {
+                zoomThumb.setAttribute('data-url', defaultImg);
+                zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
+            }
 
-    if (zoomPreview) {
-        zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
-    }
-}
+            if (zoomPreview) {
+                zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
+            }
+        }
 
         const configuratorEl = document.getElementById('configuratorSteps');
         PRODUCT_ID = productId || configuratorEl?.dataset?.productId;
@@ -714,59 +634,57 @@ if (defaultImg) {
 
     console.log('Configuration loaded:', PRODUCT_CONFIG);
     console.log(
-  "🖼️ DEFAULT VARIANT IMAGE FROM FRONTEND:",
-  PRODUCT_CONFIG?.product?.defaultVariantImage
-);
+        "🖼️ DEFAULT VARIANT IMAGE FROM FRONTEND:",
+        PRODUCT_CONFIG?.product?.defaultVariantImage
+    );
 
-if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
-    const defaultImg = PRODUCT_CONFIG.product.defaultVariantImage;
+    if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
+        const defaultImg = PRODUCT_CONFIG.product.defaultVariantImage;
 
-    if (defaultImg) {
-        // 1. Zoom Thumb update (Background and Data Attribute)
-        const zoomThumb = document.querySelector('.zoom-thumb');
-        if (zoomThumb) {
-            zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
-            zoomThumb.setAttribute('data-url', defaultImg); 
-        }
+        if (defaultImg) {
+            // 1. Zoom Thumb update (Background and Data Attribute)
+            const zoomThumb = document.querySelector('.zoom-thumb');
+            if (zoomThumb) {
+                zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
+                zoomThumb.setAttribute('data-url', defaultImg);
+            }
 
-        // 2. Zoom Preview update
-        const zoomPreview = document.querySelector('.zoom-preview');
-        if (zoomPreview) {
-            zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
-        }
+            // 2. Zoom Preview update
+            const zoomPreview = document.querySelector('.zoom-preview');
+            if (zoomPreview) {
+                zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
+            }
 
-        
-        const mainImgTag = document.querySelector('.config-image-main'); 
-        if (mainImgTag) {
-            mainImgTag.src = defaultImg;
+            const mainImgTag = document.querySelector('.config-image-main');
+            if (mainImgTag) {
+                mainImgTag.src = defaultImg;
+            }
         }
     }
-}
-    
 
     function stripHTML(html) {
-  if (!html) return "";
+        if (!html) return "";
 
-  const temp = document.createElement("div");
-  temp.innerHTML = html;
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
 
-  return (temp.textContent || temp.innerText || "")
-    .replace(/﻿/g, "") // remove invisible char
-    .trim();
-}
+        return (temp.textContent || temp.innerText || "")
+            .replace(/�/g, "") // remove invisible char
+            .trim();
+    }
 
-if (PRODUCT_CONFIG) {
-  document.querySelector('.pro_name').textContent =
-    stripHTML(PRODUCT_CONFIG.product.name);
+    if (PRODUCT_CONFIG) {
+        document.querySelector('.pro_name').textContent =
+            stripHTML(PRODUCT_CONFIG.product.name);
 
-  document.querySelector('.steps_name').textContent =
-    PRODUCT_CONFIG.steps
-      .slice(0, 2)
-      .map(s => stripHTML(s.title))
-      .join(', ');
-}
+        document.querySelector('.steps_name').textContent =
+            PRODUCT_CONFIG.steps
+                .slice(0, 2)
+                .map(s => stripHTML(s.title))
+                .join(', ');
+    }
 
-    let activeFlow = PRODUCT_CONFIG.steps.map(s => s.key);
+    let activeFlow = [];
     let currentStepIndex = 0;
     window._getActiveFlow = () => activeFlow;
 
@@ -809,7 +727,8 @@ if (PRODUCT_CONFIG) {
         });
         state.measurements = {};
 
-        document.querySelectorAll('input[name="breite"], input[name="hoehe"]').forEach(input => {
+        // UPDATED: Clear all measurement fields including flügel
+        document.querySelectorAll('input[name="breite"], input[name="hoehe"], input[name="flugel"]').forEach(input => {
             input.value = '';
             input.classList.remove("error");
         });
@@ -935,7 +854,8 @@ if (PRODUCT_CONFIG) {
             return;
         }
 
-        if (input.name === "breite" || input.name === "hoehe") {
+        // UPDATED: Include flügel in validation check
+        if (input.name === "breite" || input.name === "hoehe" || input.name === "flugel") {
             if (!validateMeasurementInput(input)) return;
         }
 
@@ -948,7 +868,6 @@ if (PRODUCT_CONFIG) {
         if (input.type === "radio") {
             handleDependencies(input.name, input.value);
         }
-  
 
         updateSummaryAlt();
         renderFinalStep();
@@ -959,34 +878,14 @@ if (PRODUCT_CONFIG) {
     /* =====================================================
        HELPERS
     ===================================================== */
-    // function saveState(input) {
-    //     if (input.type === "radio" || input.tagName === "SELECT") {
-    //         state.selections[input.name] = input.value;
-    //     }
-    //     if (input.type === "number") {
-    //         state.measurements[input.name] = Number(input.value);
-    //     }
-    // }
-
-   function saveState(input) {
-  if (input.type === "radio" || input.tagName === "SELECT") {
-    state.selections[input.name] = input.value;
-  }
-
-  if (input.type === "number") {
-    state.measurements[input.name] = Number(input.value);
-  }
-
-  if (input.name === "measurementMode") {
-    state.measurements.measurementMode = input.value;
-  }
-
-  if (input.name === "flugelMin" || input.name === "flugelMax") {
-    state.measurements[input.name] = Number(input.value);
-  }
-}
-
-console.log("MEASUREMENTS:", state.measurements);
+    function saveState(input) {
+        if (input.type === "radio" || input.tagName === "SELECT") {
+            state.selections[input.name] = input.value;
+        }
+        if (input.type === "number") {
+            state.measurements[input.name] = Number(input.value);
+        }
+    }
 
     async function updatePrices() {
         const subtotalEl = document.querySelector(".summary-price b");
@@ -1027,14 +926,19 @@ console.log("MEASUREMENTS:", state.measurements);
         return true;
     }
 
+    // UPDATED: Measurement display with flügel
     function renderFinalStep() {
         document.querySelectorAll("[data-final]").forEach(el => {
             const key = el.dataset.final;
             let value = "—";
 
             if (key === "masse") {
-                const { breite, hoehe } = state.measurements || {};
-                if (breite && hoehe) value = `${breite} mm × ${hoehe} mm`;
+                const { breite, hoehe, flugel } = state.measurements || {};
+                
+                // Show measurements based on whether flügel exists
+                if (breite && hoehe) {
+                    value = flugel ? `${breite} mm × ${hoehe} mm × ${flugel} mm` : `${breite} mm × ${hoehe} mm`;
+                }
             } else {
                 const selected = state.selections?.[key];
                 if (selected) {
@@ -1053,24 +957,20 @@ console.log("MEASUREMENTS:", state.measurements);
     }
     window._renderFinalStep = renderFinalStep;
 
+    // UPDATED: Summary display with flügel
     function updateSummaryAlt() {
         document.querySelectorAll("[data-summary-alt]").forEach(el => {
             const key = el.dataset.summaryAlt;
             let value = "—";
 
             if (key === "masse") {
-    const { breite, hoehe, measurementMode, flugelMin, flugelMax } = state.measurements || {};
-
-    if (measurementMode === "FLUGEL") {
-        if (breite && hoehe && flugelMin && flugelMax) {
-            value = `${breite} × ${hoehe} mm (Flügel: ${flugelMin}–${flugelMax} mm)`;
-        }
-    } else {
-        if (breite && hoehe) {
-            value = `${breite} × ${hoehe} mm`;
-        }
-    }
-} else {
+                const { breite, hoehe, flugel } = state.measurements || {};
+                
+                // Show measurements based on whether flügel exists
+                if (breite && hoehe) {
+                    value = flugel ? `${breite} mm × ${hoehe} mm × ${flugel} mm` : `${breite} mm × ${hoehe} mm`;
+                }
+            } else {
                 const selected = state.selections?.[key];
                 if (selected) {
                     const step = PRODUCT_CONFIG.steps.find(s => s.key === key);
@@ -1111,6 +1011,7 @@ console.log("MEASUREMENTS:", state.measurements);
 
     function mmToCm(mm) { return mm / 10; }
 
+    // UPDATED: Measurement validation with flügel support
     function validateMeasurementInput(input) {
         const min = Number(input.dataset.min);
         const max = Number(input.dataset.max);
@@ -1122,13 +1023,15 @@ console.log("MEASUREMENTS:", state.measurements);
         errorEl.style.display = "none";
         errorEl.textContent = "";
 
-        if (!value) return true;
+        if (!value) return true; // Allow empty, validation happens on step completion
 
         if (value < min || value > max) {
             input.classList.add("error");
+            const fieldLabel = input.name === "breite" ? "Breite" : 
+                              input.name === "hoehe" ? "Höhe" : "Flügel";
             errorEl.textContent =
                 `Du hast ${value} mm (= ${mmToCm(value)} cm) eingegeben. ` +
-                `Die ${input.name === "breite" ? "Breite" : "Höhe"} muss zwischen ` +
+                `Die ${fieldLabel} muss zwischen ` +
                 `${min} und ${max} mm liegen (= ${mmToCm(min)}–${mmToCm(max)} cm).`;
             errorEl.style.display = "block";
             return false;
@@ -1186,7 +1089,7 @@ console.log("MEASUREMENTS:", state.measurements);
 
         config.steps.forEach(step => {
             if (activeFlow.length && !activeFlow.includes(step.key)) return;
-            
+
             const cleanTitle = stripHTML(step.title);
 
             if (step.type === "measurement") {
@@ -1244,51 +1147,6 @@ console.log("MEASUREMENTS:", state.measurements);
 
             applyStateToUI(state);
 
-            // 👇 Apply measurement mode UI on load
-const modeSelect = content.querySelector('select[name="measurementMode"]');
-
-const toggleFlugelFields = () => {
-  const isFlugel = modeSelect.value === "FLUGEL";
-
-  content.querySelectorAll(".flugel-fields").forEach(el => {
-    el.style.display = isFlugel ? "block" : "none";
-  });
-};
-
-// ✅ Initial run
-toggleFlugelFields();
-
-// ✅ On change
-modeSelect.addEventListener("change", (e) => {
-  const selectedMode = e.target.value;
-
-  // Update state
-  state.measurements.measurementMode = selectedMode;
-
-  // Toggle UI
-  toggleFlugelFields();
-
-  // Reset values if NORMAL
-  if (selectedMode !== "FLUGEL") {
-    state.measurements.flugelMin = null;
-    state.measurements.flugelMax = null;
-
-    const minInput = content.querySelector('input[name="flugelMin"]');
-    const maxInput = content.querySelector('input[name="flugelMax"]');
-
-    if (minInput) minInput.value = "";
-    if (maxInput) maxInput.value = "";
-  }
-
-  updateSummaryAlt();
-  renderFinalStep();
-  updatePrices();
-  updateURL();
-});
-
-
-            
-
             // Re-trigger cascading dropdowns with saved state
             const groupContainers = document.querySelectorAll('[data-dropdown-group="true"] .step-content');
             groupContainers.forEach(container => {
@@ -1308,6 +1166,7 @@ modeSelect.addEventListener("change", (e) => {
     // ============================================
     // ADD TO CART
     // ============================================
+    // UPDATED: Include flügel in Shopify properties
     function buildShopifyLineItemProperties() {
         const properties = {};
 
@@ -1319,20 +1178,16 @@ modeSelect.addEventListener("change", (e) => {
             const propertyKey = `${cleanTitle}:`;
 
             if (step.type === "measurement") {
-    const { breite, hoehe, measurementMode, flugelMin, flugelMax } = state.measurements || {};
-
-    if (measurementMode === "FLUGEL") {
-        if (breite && hoehe && flugelMin && flugelMax) {
-            properties[propertyKey] =
-                `${breite} × ${hoehe} mm | Flügel: ${flugelMin}–${flugelMax} mm`;
-        }
-    } else {
-        if (breite && hoehe) {
-            properties[propertyKey] = `${breite} × ${hoehe} mm`;
-        }
-    }
-    return;
-}
+                const { breite, hoehe, flugel } = state.measurements || {};
+                
+                if (breite && hoehe) {
+                    // Include flügel in the property if it exists
+                    properties[propertyKey] = flugel 
+                        ? `${breite} mm × ${hoehe} mm × ${flugel} mm` 
+                        : `${breite} mm × ${hoehe} mm`;
+                }
+                return;
+            }
 
             const selected = state.selections?.[step.key];
             if (!selected) return;
@@ -1415,8 +1270,8 @@ modeSelect.addEventListener("change", (e) => {
             const colorFromURL = params.get('color');
 
             await new Promise(resolve => setTimeout(resolve, 5000));
-            
-            
+
+
             const cartResponse = await fetch('/cart/add.js', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1454,6 +1309,7 @@ modeSelect.addEventListener("change", (e) => {
         }
     }
 
+    // UPDATED: Check for flügel field if present
     function isConfigurationComplete() {
         const requiredSteps = activeFlow.length > 0 ? activeFlow : PRODUCT_CONFIG.steps.map(s => s.key);
 
@@ -1467,6 +1323,10 @@ modeSelect.addEventListener("change", (e) => {
 
             if (step.type === 'measurement') {
                 if (!state.measurements.breite || !state.measurements.hoehe) return false;
+                
+                // Check if flügel is required (when measurement step has flügel)
+                const hasFlugelField = step.measurementMode && step.measurementMode.toUpperCase() === 'FLUGEL';
+                if (hasFlugelField && !state.measurements.flugel) return false;
             }
         }
 
