@@ -2254,25 +2254,25 @@ export default function ConfigureProduct() {
                                           Zusätzliche Details, um Kunden bei der
                                           Entscheidung zu helfen
                                         </s-text>
-                                        <input
-                                          type="text"
-                                          value={optionFormData.description}
-                                          onChange={(e) =>
-                                            setOptionFormData({
-                                              ...optionFormData,
-                                              description: e.target.value,
-                                            })
-                                          }
-                                          placeholder="e.g., Perfekt für rechteckige Fenster"
-                                          style={{
-                                            width: "95%",
-                                            padding: "10px 12px",
-                                            border: "1px solid #c9cccf",
-                                            borderRadius: "6px",
-                                            marginTop: "6px",
-                                            fontSize: "14px",
-                                          }}
-                                        />
+                                       <div style={{ marginTop: "6px", width: "95%" }}>
+  {isClient && ReactQuill && (
+    <ReactQuill
+      value={optionFormData.description || ""}
+      onChange={(value) =>
+        setOptionFormData({
+          ...optionFormData,
+          description: value,
+        })
+      }
+      placeholder="e.g., Perfekt für rechteckige Fenster"
+      modules={modules}
+      style={{
+        background: "#fff",
+        borderRadius: "6px",
+      }}
+    />
+  )}
+</div>
                                       </div>
 
                                       <div>
