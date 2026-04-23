@@ -115,15 +115,15 @@ export const action = async ({ request, params }) => {
         ? parseInt(formData.get("heightMax"))
         : null;
 
-        const measurementMode = formData.get("measurementMode") || "NORMAL";
+      const measurementMode = formData.get("measurementMode") || "NORMAL";
 
-const flugelMin = formData.get("flugelMin")
-  ? parseInt(formData.get("flugelMin"))
-  : null;
+      const flugelMin = formData.get("flugelMin")
+        ? parseInt(formData.get("flugelMin"))
+        : null;
 
-const flugelMax = formData.get("flugelMax")
-  ? parseInt(formData.get("flugelMax"))
-  : null;
+      const flugelMax = formData.get("flugelMax")
+        ? parseInt(formData.get("flugelMax"))
+        : null;
 
       const step = await prisma.configurationStep.create({
         data: {
@@ -140,8 +140,8 @@ const flugelMax = formData.get("flugelMax")
           heightMin,
           heightMax,
           measurementMode,
-    flugelMin,
-    flugelMax,
+          flugelMin,
+          flugelMax,
         },
       });
 
@@ -173,15 +173,15 @@ const flugelMax = formData.get("flugelMax")
         ? parseInt(formData.get("heightMax"))
         : null;
 
-        const measurementMode = formData.get("measurementMode") || "NORMAL";
+      const measurementMode = formData.get("measurementMode") || "NORMAL";
 
-const flugelMin = formData.get("flugelMin")
-  ? parseInt(formData.get("flugelMin"))
-  : null;
+      const flugelMin = formData.get("flugelMin")
+        ? parseInt(formData.get("flugelMin"))
+        : null;
 
-const flugelMax = formData.get("flugelMax")
-  ? parseInt(formData.get("flugelMax"))
-  : null;
+      const flugelMax = formData.get("flugelMax")
+        ? parseInt(formData.get("flugelMax"))
+        : null;
 
       const step = await prisma.configurationStep.update({
         where: { id: stepId },
@@ -197,8 +197,8 @@ const flugelMax = formData.get("flugelMax")
           heightMin,
           heightMax,
           measurementMode,
-    flugelMin,
-    flugelMax,
+          flugelMin,
+          flugelMax,
         },
       });
 
@@ -267,7 +267,6 @@ const flugelMax = formData.get("flugelMax")
         return value;
       };
 
-      
       const showSteps = getNullable(formData.get("showSteps"));
       const parentOptionIds = getNullable(formData.get("parentOptionIds"));
 
@@ -378,8 +377,8 @@ export default function ConfigureProduct() {
     heightMin: "",
     heightMax: "",
     measurementMode: "NORMAL",
-  flugelMin: "",
-  flugelMax: "",
+    flugelMin: "",
+    flugelMax: "",
   });
 
   const handleQuillChange = (field, value) => {
@@ -432,9 +431,9 @@ export default function ConfigureProduct() {
       widthMax: "",
       heightMin: "",
       heightMax: "",
-       measurementMode: "NORMAL",
-  flugelMin: "",
-  flugelMax: "",
+      measurementMode: "NORMAL",
+      flugelMin: "",
+      flugelMax: "",
     });
     setOptionFormData({
       value: "",
@@ -518,8 +517,8 @@ export default function ConfigureProduct() {
       heightMin: step.heightMin?.toString() || "",
       heightMax: step.heightMax?.toString() || "",
       measurementMode: step.measurementMode || "NORMAL",
-  flugelMin: step.flugelMin?.toString() || "",
-  flugelMax: step.flugelMax?.toString() || "",
+      flugelMin: step.flugelMin?.toString() || "",
+      flugelMax: step.flugelMax?.toString() || "",
     });
     setShowStepForm(true);
 
@@ -584,8 +583,8 @@ export default function ConfigureProduct() {
       submitData.append("heightMin", stepFormData.heightMin);
       submitData.append("heightMax", stepFormData.heightMax);
       submitData.append("measurementMode", stepFormData.measurementMode);
-  submitData.append("flugelMin", stepFormData.flugelMin);
-  submitData.append("flugelMax", stepFormData.flugelMax);
+      submitData.append("flugelMin", stepFormData.flugelMin);
+      submitData.append("flugelMax", stepFormData.flugelMax);
     }
 
     fetcher.submit(submitData, { method: "POST" });
@@ -1071,14 +1070,16 @@ export default function ConfigureProduct() {
                           className="custom-quill-wrapper"
                           style={{ marginTop: "12px" }}
                         >
-                          <ReactQuill
-                            value={stepFormData.description || ""}
-                            onChange={(value) =>
-                              handleQuillChange("description", value)
-                            }
-                            placeholder="Enter description..."
-                            modules={modules}
-                          />
+                          {isClient && ReactQuill && (
+                            <ReactQuill
+                              value={stepFormData.description || ""}
+                              onChange={(value) =>
+                                handleQuillChange("description", value)
+                              }
+                              placeholder="Enter description..."
+                              modules={modules}
+                            />
+                          )}
                         </div>
                       </div>
 
@@ -1306,196 +1307,197 @@ export default function ConfigureProduct() {
                   )} */}
 
                   {stepFormData.type === "MEASUREMENT" && (
-  <div
-    style={{
-      background: "#f9fafb",
-      padding: "16px",
-      borderRadius: "8px",
-    }}
-  >
-    <s-text variant="bodyMd">
-      <strong>📏 Messbereiche (in Millimetern)</strong>
-    </s-text>
-    <s-text variant="bodySm" tone="subdued">
-      Legen Sie die minimalen und maximalen Werte fest, die Kunden eingeben können.
-    </s-text>
+                    <div
+                      style={{
+                        background: "#f9fafb",
+                        padding: "16px",
+                        borderRadius: "8px",
+                      }}
+                    >
+                      <s-text variant="bodyMd">
+                        <strong>📏 Messbereiche (in Millimetern)</strong>
+                      </s-text>
+                      <s-text variant="bodySm" tone="subdued">
+                        Legen Sie die minimalen und maximalen Werte fest, die
+                        Kunden eingeben können.
+                      </s-text>
 
-    {/* WIDTH + HEIGHT GRID */}
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "16px",
-        marginTop: "12px",
-      }}
-    >
-      {/* WIDTH MIN */}
-      <div>
-        <label>
-          <s-text variant="bodySm">
-            <strong>Breite – Minimum (mm)</strong>
-          </s-text>
-        </label>
-        <input
-          type="number"
-          value={stepFormData.widthMin}
-          onChange={(e) =>
-            setStepFormData({
-              ...stepFormData,
-              widthMin: e.target.value,
-            })
-          }
-          placeholder="e.g., 300"
-          style={inputStyle}
-        />
-      </div>
+                      {/* WIDTH + HEIGHT GRID */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "16px",
+                          marginTop: "12px",
+                        }}
+                      >
+                        {/* WIDTH MIN */}
+                        <div>
+                          <label>
+                            <s-text variant="bodySm">
+                              <strong>Breite – Minimum (mm)</strong>
+                            </s-text>
+                          </label>
+                          <input
+                            type="number"
+                            value={stepFormData.widthMin}
+                            onChange={(e) =>
+                              setStepFormData({
+                                ...stepFormData,
+                                widthMin: e.target.value,
+                              })
+                            }
+                            placeholder="e.g., 300"
+                            style={inputStyle}
+                          />
+                        </div>
 
-      {/* WIDTH MAX */}
-      <div>
-        <label>
-          <s-text variant="bodySm">
-            <strong>Breite – Maximum (mm)</strong>
-          </s-text>
-        </label>
-        <input
-          type="number"
-          value={stepFormData.widthMax}
-          onChange={(e) =>
-            setStepFormData({
-              ...stepFormData,
-              widthMax: e.target.value,
-            })
-          }
-          placeholder="e.g., 2000"
-          style={inputStyle}
-        />
-      </div>
+                        {/* WIDTH MAX */}
+                        <div>
+                          <label>
+                            <s-text variant="bodySm">
+                              <strong>Breite – Maximum (mm)</strong>
+                            </s-text>
+                          </label>
+                          <input
+                            type="number"
+                            value={stepFormData.widthMax}
+                            onChange={(e) =>
+                              setStepFormData({
+                                ...stepFormData,
+                                widthMax: e.target.value,
+                              })
+                            }
+                            placeholder="e.g., 2000"
+                            style={inputStyle}
+                          />
+                        </div>
 
-      {/* HEIGHT MIN */}
-      <div>
-        <label>
-          <s-text variant="bodySm">
-            <strong>Höhe – Minimum (mm)</strong>
-          </s-text>
-        </label>
-        <input
-          type="number"
-          value={stepFormData.heightMin}
-          onChange={(e) =>
-            setStepFormData({
-              ...stepFormData,
-              heightMin: e.target.value,
-            })
-          }
-          placeholder="e.g., 400"
-          style={inputStyle}
-        />
-      </div>
+                        {/* HEIGHT MIN */}
+                        <div>
+                          <label>
+                            <s-text variant="bodySm">
+                              <strong>Höhe – Minimum (mm)</strong>
+                            </s-text>
+                          </label>
+                          <input
+                            type="number"
+                            value={stepFormData.heightMin}
+                            onChange={(e) =>
+                              setStepFormData({
+                                ...stepFormData,
+                                heightMin: e.target.value,
+                              })
+                            }
+                            placeholder="e.g., 400"
+                            style={inputStyle}
+                          />
+                        </div>
 
-      {/* HEIGHT MAX */}
-      <div>
-        <label>
-          <s-text variant="bodySm">
-            <strong>Höhe – Maximum (mm)</strong>
-          </s-text>
-        </label>
-        <input
-          type="number"
-          value={stepFormData.heightMax}
-          onChange={(e) =>
-            setStepFormData({
-              ...stepFormData,
-              heightMax: e.target.value,
-            })
-          }
-          placeholder="e.g., 2000"
-          style={inputStyle}
-        />
-      </div>
-    </div>
+                        {/* HEIGHT MAX */}
+                        <div>
+                          <label>
+                            <s-text variant="bodySm">
+                              <strong>Höhe – Maximum (mm)</strong>
+                            </s-text>
+                          </label>
+                          <input
+                            type="number"
+                            value={stepFormData.heightMax}
+                            onChange={(e) =>
+                              setStepFormData({
+                                ...stepFormData,
+                                heightMax: e.target.value,
+                              })
+                            }
+                            placeholder="e.g., 2000"
+                            style={inputStyle}
+                          />
+                        </div>
+                      </div>
 
-    {/* 🔽 MEASUREMENT MODE */}
-    <div style={{ marginTop: "20px" }}>
-      <label>
-        <s-text variant="bodySm">
-          <strong>Measurement Mode</strong>
-        </s-text>
-      </label>
+                      {/* 🔽 MEASUREMENT MODE */}
+                      <div style={{ marginTop: "20px" }}>
+                        <label>
+                          <s-text variant="bodySm">
+                            <strong>Measurement Mode</strong>
+                          </s-text>
+                        </label>
 
-      <select
-        value={stepFormData.measurementMode || "NORMAL"}
-        onChange={(e) =>
-          setStepFormData({
-            ...stepFormData,
-            measurementMode: e.target.value,
-          })
-        }
-        style={{
-          width: "95%",
-          padding: "10px",
-          marginTop: "6px",
-          borderRadius: "6px",
-          border: "1px solid #c9cccf",
-        }}
-      >
-        <option value="NORMAL">Normal</option>
-        <option value="FLUGEL">Flügel</option>
-      </select>
-    </div>
+                        <select
+                          value={stepFormData.measurementMode || "NORMAL"}
+                          onChange={(e) =>
+                            setStepFormData({
+                              ...stepFormData,
+                              measurementMode: e.target.value,
+                            })
+                          }
+                          style={{
+                            width: "95%",
+                            padding: "10px",
+                            marginTop: "6px",
+                            borderRadius: "6px",
+                            border: "1px solid #c9cccf",
+                          }}
+                        >
+                          <option value="NORMAL">Normal</option>
+                          <option value="FLUGEL">Flügel</option>
+                        </select>
+                      </div>
 
-    {/* 🔽 FLUGEL FIELDS */}
-    {stepFormData.measurementMode === "FLUGEL" && (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "16px",
-          marginTop: "16px",
-        }}
-      >
-        <div>
-          <label>
-            <s-text variant="bodySm">
-              <strong>Flügel Minimum</strong>
-            </s-text>
-          </label>
-          <input
-            type="number"
-            value={stepFormData.flugelMin}
-            onChange={(e) =>
-              setStepFormData({
-                ...stepFormData,
-                flugelMin: e.target.value,
-              })
-            }
-            placeholder="e.g., 1"
-            style={inputStyle}
-          />
-        </div>
+                      {/* 🔽 FLUGEL FIELDS */}
+                      {stepFormData.measurementMode === "FLUGEL" && (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: "16px",
+                            marginTop: "16px",
+                          }}
+                        >
+                          <div>
+                            <label>
+                              <s-text variant="bodySm">
+                                <strong>Flügel Minimum</strong>
+                              </s-text>
+                            </label>
+                            <input
+                              type="number"
+                              value={stepFormData.flugelMin}
+                              onChange={(e) =>
+                                setStepFormData({
+                                  ...stepFormData,
+                                  flugelMin: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., 1"
+                              style={inputStyle}
+                            />
+                          </div>
 
-        <div>
-          <label>
-            <s-text variant="bodySm">
-              <strong>Flügel Maximum</strong>
-            </s-text>
-          </label>
-          <input
-            type="number"
-            value={stepFormData.flugelMax}
-            onChange={(e) =>
-              setStepFormData({
-                ...stepFormData,
-                flugelMax: e.target.value,
-              })
-            }
-            placeholder="e.g., 4"
-            style={inputStyle}
-          />
-        </div>
-      </div>
-    )}
-  </div>
-)}
+                          <div>
+                            <label>
+                              <s-text variant="bodySm">
+                                <strong>Flügel Maximum</strong>
+                              </s-text>
+                            </label>
+                            <input
+                              type="number"
+                              value={stepFormData.flugelMax}
+                              onChange={(e) =>
+                                setStepFormData({
+                                  ...stepFormData,
+                                  flugelMax: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., 4"
+                              style={inputStyle}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <s-divider />
 
