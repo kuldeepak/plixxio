@@ -597,21 +597,28 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.querySelector('.custom-alert .color').textContent = color;
         }
 
-        const defaultImg = PRODUCT_CONFIG?.product?.defaultVariantImage;
+        const params = new URLSearchParams(window.location.search);
+const urlImg = params.get('img');
 
-        if (defaultImg) {
-            const zoomThumb = document.querySelector('.zoom-thumb');
-            const zoomPreview = document.querySelector('.zoom-preview');
+const decodedImg = urlImg ? decodeURIComponent(urlImg) : null;
+const defaultImg = PRODUCT_CONFIG?.product?.defaultVariantImage;
 
-            if (zoomThumb) {
-                zoomThumb.setAttribute('data-url', defaultImg);
-                zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
-            }
+// PRIORITY: URL image > default image
+const finalImg = decodedImg || defaultImg;
 
-            if (zoomPreview) {
-                zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
-            }
-        }
+if (finalImg) {
+    const zoomThumb = document.querySelector('.zoom-thumb');
+    const zoomPreview = document.querySelector('.zoom-preview');
+
+    if (zoomThumb) {
+        zoomThumb.setAttribute('data-url', finalImg);
+        zoomThumb.style.backgroundImage = `url("${finalImg}")`;
+    }
+
+    if (zoomPreview) {
+        zoomPreview.style.backgroundImage = `url("${finalImg}")`;
+    }
+}
 
         const configuratorEl = document.getElementById('configuratorSteps');
         PRODUCT_ID = productId || configuratorEl?.dataset?.productId;
@@ -638,29 +645,34 @@ document.addEventListener("DOMContentLoaded", async function () {
         PRODUCT_CONFIG?.product?.defaultVariantImage
     );
 
-    if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
-        const defaultImg = PRODUCT_CONFIG.product.defaultVariantImage;
+   const params = new URLSearchParams(window.location.search);
+const urlImg = params.get('img');
+const decodedImg = urlImg ? decodeURIComponent(urlImg) : null;
 
-        if (defaultImg) {
-            // 1. Zoom Thumb update (Background and Data Attribute)
-            const zoomThumb = document.querySelector('.zoom-thumb');
-            if (zoomThumb) {
-                zoomThumb.style.backgroundImage = `url("${defaultImg}")`;
-                zoomThumb.setAttribute('data-url', defaultImg);
-            }
+if (PRODUCT_CONFIG && PRODUCT_CONFIG.product) {
+    const defaultImg = PRODUCT_CONFIG.product.defaultVariantImage;
 
-            // 2. Zoom Preview update
-            const zoomPreview = document.querySelector('.zoom-preview');
-            if (zoomPreview) {
-                zoomPreview.style.backgroundImage = `url("${defaultImg}")`;
-            }
+    // PRIORITY FIX
+    const finalImg = decodedImg || defaultImg;
 
-            const mainImgTag = document.querySelector('.config-image-main');
-            if (mainImgTag) {
-                mainImgTag.src = defaultImg;
-            }
+    if (finalImg) {
+        const zoomThumb = document.querySelector('.zoom-thumb');
+        if (zoomThumb) {
+            zoomThumb.style.backgroundImage = `url("${finalImg}")`;
+            zoomThumb.setAttribute('data-url', finalImg);
+        }
+
+        const zoomPreview = document.querySelector('.zoom-preview');
+        if (zoomPreview) {
+            zoomPreview.style.backgroundImage = `url("${finalImg}")`;
+        }
+
+        const mainImgTag = document.querySelector('.config-image-main');
+        if (mainImgTag) {
+            mainImgTag.src = finalImg;
         }
     }
+}
 
     function stripHTML(html) {
         if (!html) return "";
