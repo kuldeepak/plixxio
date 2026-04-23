@@ -14,6 +14,28 @@ let state = {
     menge: 1
 };
 
+function decodeImageParam(encoded) {
+  if (!encoded) return null;
+
+  let decoded = encoded;
+
+  try {
+    decoded = decodeURIComponent(decoded);
+
+    // double encoded case handle
+    if (decoded.includes('%')) {
+      decoded = decodeURIComponent(decoded);
+    }
+  } catch (e) {}
+
+  // ensure https
+  if (decoded.startsWith('//')) {
+    decoded = 'https:' + decoded;
+  }
+
+  return decoded;
+}
+
 /* =====================================================
    URL STATE MANAGEMENT
 ===================================================== */
@@ -591,6 +613,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         const params = new URLSearchParams(window.location.search);
         const productId = params.get("product_id");
         const img = params.get("img");
+        if (img) {
+    const finalImg = decodeImageParam(img);
+
+    const zoomThumb = document.querySelector('.zoom-thumb');
+    const zoomPreview = document.querySelector('.zoom-preview');
+    const mainImg = document.querySelector('.config-image-main');
+
+    if (zoomThumb && finalImg) {
+        zoomThumb.setAttribute('data-url', finalImg);
+        zoomThumb.style.backgroundImage = `url("${finalImg}")`;
+    }
+
+    if (zoomPreview && finalImg) {
+        zoomPreview.style.backgroundImage = `url("${finalImg}")`;
+    }
+
+    if (mainImg && finalImg) {
+        mainImg.src = finalImg;
+    }
+}
         const color = params.get("color");
 
         if (color) {
