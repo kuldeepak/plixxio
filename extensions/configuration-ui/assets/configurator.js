@@ -1245,13 +1245,46 @@ console.log("MEASUREMENTS:", state.measurements);
             applyStateToUI(state);
 
             // 👇 Apply measurement mode UI on load
-const modeSelect = document.querySelector('select[name="measurementMode"]');
-if (modeSelect) {
-  const show = modeSelect.value === "FLUGEL";
-  document.querySelectorAll(".flugel-fields").forEach(el => {
-    el.style.display = show ? "block" : "none";
+const modeSelect = content.querySelector('select[name="measurementMode"]');
+
+const toggleFlugelFields = () => {
+  const isFlugel = modeSelect.value === "FLUGEL";
+
+  content.querySelectorAll(".flugel-fields").forEach(el => {
+    el.style.display = isFlugel ? "block" : "none";
   });
-}
+};
+
+// ✅ Initial run
+toggleFlugelFields();
+
+// ✅ On change
+modeSelect.addEventListener("change", (e) => {
+  const selectedMode = e.target.value;
+
+  // Update state
+  state.measurements.measurementMode = selectedMode;
+
+  // Toggle UI
+  toggleFlugelFields();
+
+  // Reset values if NORMAL
+  if (selectedMode !== "FLUGEL") {
+    state.measurements.flugelMin = null;
+    state.measurements.flugelMax = null;
+
+    const minInput = content.querySelector('input[name="flugelMin"]');
+    const maxInput = content.querySelector('input[name="flugelMax"]');
+
+    if (minInput) minInput.value = "";
+    if (maxInput) maxInput.value = "";
+  }
+
+  updateSummaryAlt();
+  renderFinalStep();
+  updatePrices();
+  updateURL();
+});
 
 
             
