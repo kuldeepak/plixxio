@@ -252,7 +252,11 @@ img {
     color: #000;
     font-weight: 500;
     text-transform: capitalize;
+    align-items: center;
+    gap:2px;
+    display: flex;
 }
+
 
 .config-step3 input[type="number"] {
     width: 100%;

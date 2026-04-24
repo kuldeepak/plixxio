@@ -759,7 +759,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   //   return (temp.textContent || temp.innerText || "").replace(/�/g, "").trim();
   // }
 
-  
+  if (PRODUCT_CONFIG) {
+    document.querySelector(".pro_name").textContent = stripHTML(
+      PRODUCT_CONFIG.product.name,
+    );
+
+    document.querySelector(".steps_name").textContent = PRODUCT_CONFIG.steps
+  .slice(0, 2)
+  .map((s) => stripHTML(decodeHTML(stripHTML(s.title))))
+  .join(", ");
+  }
 
   let activeFlow = [];
   let currentStepIndex = 0;
@@ -1242,7 +1251,60 @@ document.addEventListener("DOMContentLoaded", async function () {
   //   });
   // }
 
- function buildSummaries(config) {
+//  function buildSummaries(config) {
+//   const finalTable = document.getElementById("finalSummary");
+//   const sideList = document.getElementById("summaryBoxAltList");
+
+//   if (!finalTable || !sideList) return;
+
+//   finalTable.innerHTML = "";
+//   sideList.innerHTML = "";
+
+//   config.steps.forEach((step) => {
+//     if (activeFlow.length && !activeFlow.includes(step.key)) return;
+
+//     // ✅ PURE TEXT ONLY
+//     const cleanTitle = stripHTML(step.title || "");
+
+//     // ===== FINAL TABLE =====
+//     const tr = document.createElement("tr");
+
+//     const td1 = document.createElement("td");
+//     td1.textContent = cleanTitle; // 🔒 SAFE (no HTML)
+
+//     const td2 = document.createElement("td");
+//     td2.setAttribute(
+//       "data-final",
+//       step.type === "measurement" ? "masse" : step.key
+//     );
+//     td2.textContent = "—";
+
+//     tr.appendChild(td1);
+//     tr.appendChild(td2);
+//     finalTable.appendChild(tr);
+
+//     // ===== SIDE LIST =====
+//     const li = document.createElement("li");
+
+//     const strong = document.createElement("strong");
+//     strong.textContent = cleanTitle + ":";
+
+//     const span = document.createElement("span");
+//     span.setAttribute(
+//       "data-summary-alt",
+//       step.type === "measurement" ? "masse" : step.key
+//     );
+//     span.textContent = "—";
+
+//     li.appendChild(strong);
+//     li.appendChild(document.createTextNode(" "));
+//     li.appendChild(span);
+
+//     sideList.appendChild(li);
+//   });
+// }
+
+function buildSummaries(config) {
   const finalTable = document.getElementById("finalSummary");
   const sideList = document.getElementById("summaryBoxAltList");
 
@@ -1254,14 +1316,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   config.steps.forEach((step) => {
     if (activeFlow.length && !activeFlow.includes(step.key)) return;
 
-    // ✅ PURE TEXT ONLY
-    const cleanTitle = stripHTML(step.title || "");
+    // ✅ FULL CLEAN (HTML + encoded HTML remove)
+    const cleanTitle = stripHTML(decodeHTML(step.title || ""));
 
     // ===== FINAL TABLE =====
     const tr = document.createElement("tr");
 
     const td1 = document.createElement("td");
-    td1.textContent = cleanTitle; // 🔒 SAFE (no HTML)
+    td1.textContent = cleanTitle;
 
     const td2 = document.createElement("td");
     td2.setAttribute(
