@@ -759,21 +759,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   //   return (temp.textContent || temp.innerText || "").replace(/�/g, "").trim();
   // }
 
-  if (PRODUCT_CONFIG) {
-    document.querySelector(".pro_name").textContent = stripHTML(
-      PRODUCT_CONFIG.product.name,
-    );
-
-    const stepsEl = document.querySelector(".steps_name");
-
-if (stepsEl && PRODUCT_CONFIG?.steps) {
-  stepsEl.textContent = PRODUCT_CONFIG.steps
-    .slice(0, 2)
-    .map((s) => stripHTML(s.title || ""))
-    .filter(Boolean)
-    .join(", ");
-}
-  }
+  
 
   let activeFlow = [];
   let currentStepIndex = 0;
