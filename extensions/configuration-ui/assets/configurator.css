@@ -558,6 +558,7 @@ p.question {
 .config-step {
     margin-bottom: 40px;
     margin-top: 45px;
+    text-align:center;
 }
 
 .title-back-btn hr.main-sep {

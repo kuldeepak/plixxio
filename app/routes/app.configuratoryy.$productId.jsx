@@ -71,9 +71,23 @@ const getNullable = (value) => {
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, 4, 5, 6, false] }],
+
     ["bold", "italic", "underline", "strike"],
+
     [{ color: [] }, { background: [] }],
+
+    [{ script: "sub" }, { script: "super" }],
+
     [{ list: "ordered" }, { list: "bullet" }],
+    [{ indent: "-1" }, { indent: "+1" }],
+
+    [{ align: [] }],
+
+    ["link", "image", "video"],
+
+    ["blockquote", "code-block"],
+
+    ["clean"] // remove formatting
   ],
 };
 
@@ -1565,6 +1579,8 @@ export default function ConfigureProduct() {
                             justifyContent: "space-between",
                             alignItems: "flex-start",
                             padding: "12px",
+                            flexDirection:"column",
+                            gap:"10px",
                           }}
                         >
                           <div style={{ flex: 1 }}>
@@ -1577,9 +1593,9 @@ export default function ConfigureProduct() {
                               }}
                             >
                               <s-badge tone="info">Step {step.order}</s-badge>
-                              <s-heading variant="headingMd">
+                              <div variant="headingMd" style={{ display: "inline-block", maxWidth: "340px", wordBreak: "break-all", }}>
                                 {step.title}
-                              </s-heading>
+                              </div>
                               <s-badge
                                 tone={
                                   step.type === "OPTIONS"
@@ -2254,25 +2270,32 @@ export default function ConfigureProduct() {
                                           Zusätzliche Details, um Kunden bei der
                                           Entscheidung zu helfen
                                         </s-text>
-                                       <div style={{ marginTop: "6px", width: "95%" }}>
-  {isClient && ReactQuill && (
-    <ReactQuill
-      value={optionFormData.description || ""}
-      onChange={(value) =>
-        setOptionFormData({
-          ...optionFormData,
-          description: value,
-        })
-      }
-      placeholder="e.g., Perfekt für rechteckige Fenster"
-      modules={modules}
-      style={{
-        background: "#fff",
-        borderRadius: "6px",
-      }}
-    />
-  )}
-</div>
+                                        <div
+                                          style={{
+                                            marginTop: "6px",
+                                            width: "95%",
+                                          }}
+                                        >
+                                          {isClient && ReactQuill && (
+                                            <ReactQuill
+                                              value={
+                                                optionFormData.description || ""
+                                              }
+                                              onChange={(value) =>
+                                                setOptionFormData({
+                                                  ...optionFormData,
+                                                  description: value,
+                                                })
+                                              }
+                                              placeholder="e.g., Perfekt für rechteckige Fenster"
+                                              modules={modules}
+                                              style={{
+                                                background: "#fff",
+                                                borderRadius: "6px",
+                                              }}
+                                            />
+                                          )}
+                                        </div>
                                       </div>
 
                                       <div>
