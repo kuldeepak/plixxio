@@ -1428,9 +1428,15 @@ function buildSummaries(config) {
     (PRODUCT_CONFIG?.steps || []).forEach((step) => {
       if (activeFlow.length && !activeFlow.includes(step.key)) return;
 
+      // const cleanTitle = stripHTML(step.title);
+      // if (!cleanTitle) return;
+      // const propertyKey = `${cleanTitle}`;
+
       const cleanTitle = stripHTML(step.title);
       if (!cleanTitle) return;
-      const propertyKey = `${cleanTitle}:`;
+
+      // Prevent Shopify from auto-formatting the label
+      const propertyKey = "\u200C" + cleanTitle;
 
       if (step.type === "measurement") {
         const { breite, hoehe, flugel } = state.measurements || {};
