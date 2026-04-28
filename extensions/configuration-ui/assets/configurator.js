@@ -176,7 +176,7 @@ async function loadConfiguration(productId) {
   try {
     const response = await fetch(
       `https://plixxo.droplify.de/api/public/configurator/${productId}?v=${Date.now()}`,
-      { cache: "no-store" },
+      { cache: "no-store",credentials: "same-origin" },
     );
     const data = await response.json();
 
@@ -201,6 +201,7 @@ async function calculatePrice(productId, selections, measurements, quantity) {
       {
         method: "POST",
         cache: "no-store",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId, selections, measurements, quantity }),
       },

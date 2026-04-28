@@ -2,7 +2,7 @@
 
 client_id = "25e8a3d82b3f9dc31ca13160286ba744"
 name = "plixxo-app"
-application_url = "https://plixxo-app-tvhmp.ondigitalocean.app"
+application_url = "https://plixxo.droplify.de"
 embedded = true
 
 [webhooks]
@@ -17,10 +17,10 @@ api_version = "2026-04"
 scopes = "read_inventory,read_locations,read_publications,write_app_proxy,write_files,write_inventory,write_products,write_publications"
 
 [auth]
-redirect_urls = [ "https://plixxo-app-tvhmp.ondigitalocean.app/api/auth" ]
+redirect_urls = [ "https://plixxo.droplify.de/api/auth" ]
 
 [app_proxy]
-url = "https://plixxo-app-tvhmp.ondigitalocean.app/cartApi"
+url = "https://plixxo.droplify.de/cartApi"
 subpath = "cartApi"
 prefix = "apps"
 
