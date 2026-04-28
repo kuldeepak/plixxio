@@ -175,7 +175,7 @@ function setupPopStateHandler() {
 async function loadConfiguration(productId) {
   try {
     const response = await fetch(
-      `https://plixxo-app-tvhmp.ondigitalocean.app/api/public/configurator/${productId}?v=${Date.now()}`,
+      `https://plixxo.droplify.de/api/public/configurator/${productId}?v=${Date.now()}`,
       { cache: "no-store" },
     );
     const data = await response.json();
@@ -197,7 +197,7 @@ async function loadConfiguration(productId) {
 async function calculatePrice(productId, selections, measurements, quantity) {
   try {
     const response = await fetch(
-      `https://plixxo-app-tvhmp.ondigitalocean.app/api/public/calculate-price?v=${Date.now()}`,
+      `https://plixxo.droplify.de/api/public/calculate-price?v=${Date.now()}`,
       {
         method: "POST",
         cache: "no-store",
