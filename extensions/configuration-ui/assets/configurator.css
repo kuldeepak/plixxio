@@ -254,7 +254,7 @@ img {
     text-transform: capitalize;
     align-items: center;
     gap:2px;
-    display: flex;
+    /* display: flex; */
 }
 
 
@@ -562,9 +562,14 @@ p.question {
 .config-step {
     margin-bottom: 40px;
     margin-top: 45px;
-    text-align:center;
+    text-align:left;
 }
-
+.heading_content_div.step-header *{
+    text-align: center;
+}
+.heading_content_div_1 *{
+text-align: center;
+}
 .title-back-btn hr.main-sep {
     margin-top: 0px;
     margin-bottom: 26px;
@@ -619,14 +624,14 @@ label.option-card img {
 .config-step h2 {
     font-size: 22px;
     color: #000000;
-    text-align: center;
+    text-align: left;
     line-height: 1.2;
     margin: 0 0px 5px 0px;
     font-weight: 500;
 }
 
 .config-step p {
-    text-align: center;
+    text-align: left;
     font-size: 16px;
     margin: 0px 0px 30px 0px;
     letter-spacing: 0;
@@ -1071,7 +1076,3 @@ body .config-right {
     font-weight: 300;
 } */
 
-.config-step h1 {
-    text-align: center;
-    margin: 7px 0px;
-}

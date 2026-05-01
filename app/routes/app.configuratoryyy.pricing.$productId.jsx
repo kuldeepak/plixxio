@@ -342,7 +342,7 @@ export default function PricingMatrix() {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span>Höhe (mm) →<br />Breite (mm) ↓</span>
+                      <span>Breite (mm) →<br />Höhe (mm) ↓</span>
                     </div>
                   </th>
                   {heightRanges.map((height, idx) => (

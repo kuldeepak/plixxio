@@ -323,7 +323,7 @@ function createStepShell(step, index, isDropdownGroup = false) {
            data-step="${index + 1}"
            data-step-key="${stepKey}"
            ${isDropdownGroup ? 'data-dropdown-group="true"' : ""}>
-        <div class="heading_content_div">
+        <div class="heading_content_div step-header">
           <h2>${title}</h2>
           <p>${subtitle}</p>
         </div>
@@ -524,7 +524,7 @@ function renderOptions(step, container) {
           <div class="option-inner">
             <div class="option-text">
              <div class="option-description">
-  ${stripHTML(opt.description || "")}
+  ${decodeHTML(opt.description || "")}
 </div>
             </div>
 

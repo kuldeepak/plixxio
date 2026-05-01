@@ -1,13 +1,12 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "df0bfadfc1fc26ad417733e2abfc95fc"
+client_id = "a86755efde861aed7ee79eb603a9a66a"
 name = "plixxo-app"
 application_url = "https://example.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-07"
