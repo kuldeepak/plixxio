@@ -363,7 +363,7 @@ table.final-summary td:first-child {
 }
 
 table.final-summary tr td {
-    padding: 13px 20px;
+    padding: 13px 8px;
     vertical-align: top;
     border-top: 1px solid #dee2e6;
     color: #000;
@@ -1076,3 +1076,27 @@ body .config-right {
     font-weight: 300;
 } */
 
+html body {
+    overflow-x: unset !important;
+}
+
+@media (max-width: 768px) {
+body table.final-summary {
+    overflow-x: scroll;
+}
+body table.final-summary td:first-child {
+    width: auto;
+    word-break: break-all;
+}
+body .config-step {
+    width: 100% !important;
+}
+body table.final-summary tr {
+    width: 100%;
+}
+body table.final-summary tr td {
+    padding: 13px 8px;
+     word-break: break-word;
+
+}
+}
