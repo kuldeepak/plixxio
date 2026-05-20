@@ -446,41 +446,44 @@ function renderSingleDropdownInGroup(
   // Listen for change on this dropdown → show next
   const select = wrapper.querySelector("select");
   select.addEventListener("change", (e) => {
-  const value = e.target.value;
-  state.selections[step.key] = value;
-  urlKeys.add(step.key);
-  refreshMeasurementSteps();
+    const value = e.target.value;
 
-  // ✅ ADD THIS: Reset subsequent dropdowns
-  const toRemove = container.querySelectorAll(`.dropdown-step-row[data-dropdown-index]`);
-  toRemove.forEach((el) => {
-    if (Number(el.dataset.dropdownIndex) > index) {
-      el.remove();
-      const removedKey = el.dataset.dropdownKey;
-      delete state.selections[removedKey];
-      urlKeys.delete(removedKey);
+    // Save to state AND mark this key as explicitly set (treat like URL key)
+    state.selections[step.key] = value;
+    urlKeys.add(step.key);
+
+    // Remove all dropdowns AFTER this one
+    const toRemove = container.querySelectorAll(
+      `.dropdown-step-row[data-dropdown-index]`,
+    );
+    toRemove.forEach((el) => {
+      if (Number(el.dataset.dropdownIndex) > index) {
+        el.remove();
+        // Clear state and urlKeys for removed dropdowns
+        const removedKey = el.dataset.dropdownKey;
+        delete state.selections[removedKey];
+        urlKeys.delete(removedKey);
+      }
+    });
+
+    // Render next dropdown if a value was selected
+    if (value) {
+      renderSingleDropdownInGroup(
+        groupStepsList,
+        container,
+        index + 1,
+        urlKeys,
+      );
     }
+
+    // IMPORTANT: buildSummaries must run first so [data-summary-alt]/[data-final]
+    // elements exist before we try to populate them.
+    if (window._buildSummaries) window._buildSummaries();
+    if (window._updateSummaryAlt) window._updateSummaryAlt();
+    if (window._renderFinalStep) window._renderFinalStep();
+    if (window._updatePrices) window._updatePrices();
+    if (window._updateURL) window._updateURL();
   });
-
-  // ✅ Also clear measurements if they exist
-  const measurementStep = PRODUCT_CONFIG.steps.find((s) => s.type === "measurement");
-  if (measurementStep) {
-    state.measurements = {};
-    document.querySelectorAll('input[name="breite"], input[name="hoehe"], input[name="flugel"]')
-      .forEach((input) => input.value = "");
-  }
-
-  // Render next dropdown if value selected
-  if (value) {
-    renderSingleDropdownInGroup(groupStepsList, container, index + 1, urlKeys);
-  }
-
-  if (window._buildSummaries) window._buildSummaries();
-  if (window._updateSummaryAlt) window._updateSummaryAlt();
-  if (window._renderFinalStep) window._renderFinalStep();
-  if (window._updatePrices) window._updatePrices();
-  if (window._updateURL) window._updateURL();
-});
 }
 
 function renderOptions(step, container) {
@@ -503,7 +506,6 @@ function renderOptions(step, container) {
               type="radio"
               name="${step.key}"
               value="${opt.value}"
-              data-option-id="${opt.id}"
             >
             <div class="option-title1">
               ${opt.label}
@@ -544,138 +546,6 @@ function renderOptions(step, container) {
   });
 }
 
-function getSelectedOptionIds() {
-  return Object.entries(state.selections || {})
-    .map(([stepKey, selectedValue]) => {
-      const selectedStep = PRODUCT_CONFIG?.steps?.find((s) => s.key === stepKey);
-      const selectedOpt = selectedStep?.options?.find(
-        (o) => o.value === selectedValue,
-      );
-      return selectedOpt?.id;
-    })
-    .filter(Boolean);
-}
-
-function shouldShowFlugelForStep(step) {
-  if (!step) return false;
-
-  const measurementMode = String(step.measurementMode || "")
-    .trim()
-    .toUpperCase();
-
-  if (measurementMode !== "FLUGEL") return false;
-
-  const depId = String(step.flugelDependencyOptionId || "").trim();
-  if (!depId || depId === "null" || depId === "undefined") return false;
-
-  // ✅ Check ALL selected radios, not only first one
-  const checkedOptions = document.querySelectorAll(
-    'input[type="radio"]:checked[data-option-id]'
-  );
-
-  for (const input of checkedOptions) {
-    if (String(input.dataset.optionId || "").trim() === depId) {
-      return true;
-    }
-  }
-
-  // ✅ fallback from state
-  for (const [stepKey, selectedValue] of Object.entries(state.selections || {})) {
-    const selectedStep = PRODUCT_CONFIG.steps.find((s) => s.key === stepKey);
-    const selectedOpt = selectedStep?.options?.find(
-      (o) => String(o.value) === String(selectedValue)
-    );
-
-    if (selectedOpt && String(selectedOpt.id).trim() === depId) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function renderMeasurementStepContent(step, content) {
-  if (!step || !content) return;
-
-  const oldBreite = state.measurements?.breite || "";
-  const oldHoehe = state.measurements?.hoehe || "";
-  const oldFlugel = state.measurements?.flugel || "";
-const showFlugel = shouldShowFlugelForStep(step);
-
-  if (!showFlugel && state.measurements?.flugel) {
-    delete state.measurements.flugel;
-  }
-
-  let html = `
-              <div class="measure-field">
-                <label>Breite (${step.width.min} – ${step.width.max} mm)</label>
-                <input
-                  type="number"
-                  name="breite"
-                  placeholder="Breite in mm"
-                  data-min="${step.width.min}"
-                  data-max="${step.width.max}"
-                >
-                <div class="measure-error" data-error-for="breite"></div>
-              </div>
-          
-              <div class="measure-field">
-                <label>Höhe (${step.height.min} – ${step.height.max} mm)</label>
-                <input
-                  type="number"
-                  name="hoehe"
-                  placeholder="Höhe in mm"
-                  data-min="${step.height.min}"
-                  data-max="${step.height.max}"
-                >
-                <div class="measure-error" data-error-for="hoehe"></div>
-              </div>
-            `;
-
-  if (showFlugel) {
-    html += `
-              <div class="measure-field">
-                <label>Flügel (${step.flugelMin} – ${step.flugelMax} mm)</label>
-                <input
-                  type="number"
-                  name="flugel"
-                  placeholder="Flügel in mm"
-                  data-min="${step.flugelMin}"
-                  data-max="${step.flugelMax}"
-                >
-                <div class="measure-error" data-error-for="flugel"></div>
-              </div>
-                `;
-  }
-
-  content.innerHTML = html;
-
-  const breiteInput = content.querySelector('input[name="breite"]');
-  const hoeheInput = content.querySelector('input[name="hoehe"]');
-  const flugelInput = content.querySelector('input[name="flugel"]');
-
-  if (breiteInput && oldBreite) breiteInput.value = oldBreite;
-  if (hoeheInput && oldHoehe) hoeheInput.value = oldHoehe;
-  if (flugelInput && oldFlugel) flugelInput.value = oldFlugel;
-}
-
-function refreshMeasurementSteps() {
-  if (!PRODUCT_CONFIG?.steps) return;
-
-  PRODUCT_CONFIG.steps.forEach((step) => {
-    if (step.type !== "measurement") return;
-
-    const stepEl = document.querySelector(
-      `.config-step[data-step-key="${step.key}"]`,
-    );
-    const content = stepEl?.querySelector(".step-content");
-
-    if (content) {
-      renderMeasurementStepContent(step, content);
-    }
-  });
-}
-
 function renderStepContents(config, virtualSteps) {
   virtualSteps.forEach((vStep, index) => {
     const stepEl = document.querySelector(
@@ -697,7 +567,54 @@ function renderStepContents(config, virtualSteps) {
 
     // UPDATED: Measurement with conditional Flügel field
     if (vStep.type === "measurement") {
-      renderMeasurementStepContent(vStep, content);
+      const hasFlugel =
+        vStep.measurementMode &&
+        vStep.measurementMode.toUpperCase() === "FLUGEL";
+
+      let html = `
+              <div class="measure-field">
+                <label>Breite (${vStep.width.min} – ${vStep.width.max} mm)</label>
+                <input
+                  type="number"
+                  name="breite"
+                  placeholder="Breite in mm"
+                  data-min="${vStep.width.min}"
+                  data-max="${vStep.width.max}"
+                >
+                <div class="measure-error" data-error-for="breite"></div>
+              </div>
+          
+              <div class="measure-field">
+                <label>Höhe (${vStep.height.min} – ${vStep.height.max} mm)</label>
+                <input
+                  type="number"
+                  name="hoehe"
+                  placeholder="Höhe in mm"
+                  data-min="${vStep.height.min}"
+                  data-max="${vStep.height.max}"
+                >
+                <div class="measure-error" data-error-for="hoehe"></div>
+              </div>
+            `;
+
+      // Conditionally add Flügel field
+      if (hasFlugel) {
+        html += `
+              <div class="measure-field">
+                <label>Flügel (${vStep.flugelMin} – ${vStep.flugelMax} mm)</label>
+                <input
+                  type="number"
+                  name="flugel"
+                  placeholder="Flügel in mm"
+                  data-min="${vStep.flugelMin}"
+                  data-max="${vStep.flugelMax}"
+                >
+                <div class="measure-error" data-error-for="flugel"></div>
+              </div>
+                `;
+      }
+
+      content.innerHTML = html;
     }
   });
 }
@@ -774,46 +691,6 @@ function applySelectionsWithDependencies() {
       radio.checked = true;
     }
   });
-}
-
-function resetStepsAfter(stepKey) {
-  const stepIndex = activeFlow.indexOf(stepKey);
-  if (stepIndex === -1) return;
-
-  const stepsToRemove = activeFlow.slice(stepIndex + 1);
-
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
-
-  stepsToRemove.forEach((key) => {
-    // remove stored selection
-    delete state.selections[key];
-
-    // ✅ remove correct URL param
-    params.delete(`sel_${key}`);
-
-    // hide UI
-    const el = document.querySelector(`[data-step-key="${key}"]`);
-    if (el) el.classList.add("is-disabled");
-  });
-
-  // optional: clear measurements
-  Object.keys(state.measurements).forEach((mKey) => {
-    delete state.measurements[mKey];
-    params.delete(`m_${mKey}`);
-  });
-
-  // update URL immediately
-  const newURL = `${url.pathname}?${params.toString()}`;
-
-  window.history.replaceState(
-    { state: JSON.parse(JSON.stringify(state)) },
-    "",
-    newURL
-  );
-
-  // keep only valid flow
-  activeFlow = activeFlow.slice(0, stepIndex + 1);
 }
 
 /* =====================================================
@@ -925,292 +802,54 @@ document.addEventListener("DOMContentLoaded", async function () {
   /* =====================================================
        CONDITIONAL FLOW HANDLER
     ===================================================== */
-// function handleDependencies(stepKey, selectedValue) {
-//   const step = PRODUCT_CONFIG.steps.find((s) => s.key === stepKey);
-//   if (!step || !step.options) return;
+  function handleDependencies(stepKey, selectedValue) {
+    const step = PRODUCT_CONFIG.steps.find((s) => s.key === stepKey);
+    if (!step || !step.options) return;
 
-//   const option = step.options.find((o) => o.value === selectedValue);
-//   if (!option) return;
+    const option = step.options.find((o) => o.value === selectedValue);
+    if (!option || !option.showSteps) return;
 
-//   const newFlow = [];
-
-//   function addToFlow(key) {
-//     if (key && !newFlow.includes(key)) {
-//       newFlow.push(key);
-//     }
-//   }
-
-//   function normalizeShowSteps(showSteps) {
-//     if (!showSteps) return [];
-
-//     if (Array.isArray(showSteps)) return showSteps;
-
-//     try {
-//       return JSON.parse(showSteps);
-//     } catch {
-//       return [];
-//     }
-//   }
-
-//   // ✅ preserve previous active flow first
-//   activeFlow.forEach(addToFlow);
-
-//   // ✅ preserve all already selected steps
-//   Object.keys(state.selections).forEach(addToFlow);
-
-//   // ✅ add current step
-//   addToFlow(stepKey);
-
-//   // ✅ add dependent steps, but they will stay hidden until WEITER click
-//   normalizeShowSteps(option.showSteps).forEach(addToFlow);
-
-//   activeFlow = newFlow;
-
-//   const currentFlowIndex = activeFlow.indexOf(stepKey);
-
-//   document.querySelectorAll(".config-step").forEach((el) => {
-//     el.classList.add("is-disabled");
-//   });
-
-//   const finalStep = document.getElementById("finalStep");
-//   if (finalStep) finalStep.classList.add("is-disabled");
-
-//   // ✅ show previous + current only
-//   activeFlow.slice(0, currentFlowIndex + 1).forEach((key) => {
-//     showStepByKey(key);
-//   });
-
-//   // ❌ do not delete previous selections
-//   // ❌ do not clear URL selections
-
-//   buildSummaries(PRODUCT_CONFIG);
-//   updateSummaryAlt();
-//   renderFinalStep();
-//   updatePrices();
-//   updateURL();
-// }
-
-
-function handleDependencies(stepKey, selectedValue) {
-  const step = PRODUCT_CONFIG.steps.find((s) => s.key === stepKey);
-  if (!step || !step.options) return;
-
-  const option = step.options.find((o) => o.value === selectedValue);
-  if (!option) return;
-
-  const firstStepKey = PRODUCT_CONFIG.steps[0]?.key;
-  const oldValue = state.selections[stepKey];
-
-  const isFirstStepChanged =
-    stepKey === firstStepKey &&
-    oldValue &&
-    oldValue !== selectedValue;
-
-  function normalizeShowSteps(showSteps) {
-    if (!showSteps) return [];
-
-    if (Array.isArray(showSteps)) return showSteps;
-
-    try {
-      return JSON.parse(showSteps);
-    } catch {
-      return [];
-    }
-  }
-
-  // =====================================================
-  // ✅ FIRST STEP CHANGED → FULL RESET
-  // =====================================================
-  if (isFirstStepChanged) {
-
-    // keep only clicked first step
-    state.selections = {
-      [firstStepKey]: selectedValue,
-    };
-
-    // clear measurements + qty
-    state.measurements = {};
-    state.menge = 1;
-
-    // reset flow
-    activeFlow = [];
-
-    // reset all UI except first step
-    document.querySelectorAll(".config-step").forEach((el) => {
-
-      const stepKeyAttr = el.getAttribute("data-step-key");
-
-      if (stepKeyAttr !== firstStepKey) {
-
-        el.classList.add("is-disabled");
-
-        el.querySelectorAll("input, select, textarea").forEach((input) => {
-
-          if (
-            input.type === "radio" ||
-            input.type === "checkbox"
-          ) {
-            input.checked = false;
-          } else {
-            input.value = "";
-          }
-
-        });
+    // Reset previous selections (except current)
+    Object.keys(state.selections).forEach((key) => {
+      if (key !== stepKey) {
+        delete state.selections[key];
+        document
+          .querySelectorAll(`input[name="${key}"]`)
+          .forEach((r) => (r.checked = false));
       }
     });
+    state.measurements = {};
 
-    // clear measurement inputs
+    // UPDATED: Clear all measurement fields including flügel
     document
       .querySelectorAll(
-        'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
+        'input[name="breite"], input[name="hoehe"], input[name="flugel"]',
       )
       .forEach((input) => {
         input.value = "";
+        input.classList.remove("error");
       });
-
-    // =====================================================
-    // ✅ RESET URL
-    // =====================================================
-    const currentParams = new URLSearchParams(window.location.search);
-
-    const params = new URLSearchParams();
-
-    // keep base params
-    ["product_id", "img", "color"].forEach((key) => {
-      if (currentParams.has(key)) {
-        params.set(key, currentParams.get(key));
-      }
+    document.querySelectorAll(".measure-error").forEach((el) => {
+      el.style.display = "none";
+      el.textContent = "";
     });
 
-    // keep clicked first step
-    params.set(`sel_${firstStepKey}`, selectedValue);
+    activeFlow = [stepKey, ...option.showSteps];
+    currentStepIndex = 0;
 
-    const cleanURL =
-      `${window.location.pathname}?${params.toString()}`;
-
-    window.history.replaceState(
-      { state: JSON.parse(JSON.stringify(state)) },
-      "",
-      cleanURL
-    );
-
-  } else {
-
-    // normal selection save
-    state.selections[stepKey] = selectedValue;
-  }
-
-  // =====================================================
-  // ✅ BUILD FLOW
-  // =====================================================
-  const newFlow = [];
-
-  function addToFlow(key) {
-    if (key && !newFlow.includes(key)) {
-      newFlow.push(key);
-    }
-  }
-
-  if (isFirstStepChanged) {
-
-  // reset all previous selections
-  Object.keys(state.selections).forEach((key) => {
-
-    if (key !== firstStepKey) {
-
-      delete state.selections[key];
-
-      document
-        .querySelectorAll(`input[name="${key}"]`)
-        .forEach((r) => {
-          r.checked = false;
-        });
-
-      document
-        .querySelectorAll(`select[name="${key}"]`)
-        .forEach((s) => {
-          s.value = "";
-        });
-    }
-  });
-
-  // keep clicked first option
-  state.selections[firstStepKey] = selectedValue;
-
-  // clear measurements
-  state.measurements = {};
-
-  // clear qty
-  state.menge = 1;
-
-  // clear measurement UI
-  document
-    .querySelectorAll(
-      'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
-    )
-    .forEach((input) => {
-      input.value = "";
+    document.querySelectorAll(".config-step").forEach((el) => {
+      el.classList.add("is-disabled");
     });
 
-  // rebuild flow
-  activeFlow = [firstStepKey];
+    const finalStep = document.getElementById("finalStep");
+    if (finalStep) finalStep.classList.add("is-disabled");
 
-  // reset URL immediately
-  updateURL();
-} else {
-
-    activeFlow.forEach(addToFlow);
-
-    Object.keys(state.selections).forEach(addToFlow);
-
-    addToFlow(stepKey);
+    showStepByKey(stepKey);
+    buildSummaries(PRODUCT_CONFIG);
+    updateSummaryAlt();
+    renderFinalStep();
+    updatePrices();
   }
-
-  normalizeShowSteps(option.showSteps).forEach(addToFlow);
-
-  activeFlow = newFlow;
-
-  const currentFlowIndex = activeFlow.indexOf(stepKey);
-
-  // =====================================================
-  // ✅ DISABLE ALL
-  // =====================================================
-  document.querySelectorAll(".config-step").forEach((el) => {
-    el.classList.add("is-disabled");
-  });
-
-  const finalStep = document.getElementById("finalStep");
-
-  if (finalStep) {
-    finalStep.classList.add("is-disabled");
-  }
-
-  // =====================================================
-  // ✅ SHOW ACTIVE FLOW
-  // =====================================================
-  activeFlow
-    .slice(0, currentFlowIndex + 1)
-    .forEach((key) => {
-      showStepByKey(key);
-    });
-
-  // =====================================================
-  // ✅ UPDATE UI
-  // =====================================================
-  buildSummaries(PRODUCT_CONFIG);
-
-  updateSummaryAlt();
-
-  renderFinalStep();
-
-  updatePrices();
-
-  updateURL();
-}
-
-
-
-
 
   function showStepByKey(key) {
     // Key might be a real step key OR a dropdown_group virtual key
@@ -1289,42 +928,6 @@ function handleDependencies(stepKey, selectedValue) {
 
       // Find the next key AFTER the group's last dropdown
       const nextKey = activeFlow[lastFlowIndex + 1];
-      activeFlow.slice(lastFlowIndex + 1).forEach((key) => {
-  delete state.selections[key];
-
-  document
-    .querySelectorAll(`input[name="${key}"]`)
-    .forEach((input) => (input.checked = false));
-
-  document
-    .querySelectorAll(`select[name="${key}"]`)
-    .forEach((select) => (select.value = ""));
-});
-
-const measurementStep = PRODUCT_CONFIG.steps.find(
-  (s) => s.type === "measurement"
-);
-
-if (
-  measurementStep &&
-  activeFlow.indexOf(measurementStep.key) > lastFlowIndex
-) {
-  state.measurements = {};
-
-  document
-    .querySelectorAll(
-      'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
-    )
-    .forEach((input) => {
-      input.value = "";
-      input.classList.remove("error");
-    });
-
-  document.querySelectorAll(".measure-error").forEach((el) => {
-    el.style.display = "none";
-    el.textContent = "";
-  });
-}
       showStepByKey(nextKey);
 
       // The next step element — look up by real key first, then fallback to group
@@ -1371,7 +974,6 @@ if (
 
     if (input.type === "radio") {
       handleDependencies(input.name, input.value);
-      refreshMeasurementSteps();
     }
 
     updateSummaryAlt();
@@ -1999,10 +1601,11 @@ function buildSummaries(config) {
         if (!state.measurements.breite || !state.measurements.hoehe)
           return false;
 
-        // Check if flügel is required only when dependency condition matches
-        if (shouldShowFlugelForStep(step) && !state.measurements.flugel) {
-          return false;
-        }
+        // Check if flügel is required (when measurement step has flügel)
+        const hasFlugelField =
+          step.measurementMode &&
+          step.measurementMode.toUpperCase() === "FLUGEL";
+        if (hasFlugelField && !state.measurements.flugel) return false;
       }
     }
 

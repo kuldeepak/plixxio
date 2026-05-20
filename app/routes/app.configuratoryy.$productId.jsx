@@ -13,9 +13,6 @@ import { json } from "@remix-run/node";
 import { DndContext } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { SortableItem } from "../components/SortableItem";
-// import { PrismaClient } from "@prisma/client";
-
-// const prisma = new PrismaClient();
 
 const inputStyle = {
   width: "95%",
@@ -71,23 +68,15 @@ const getNullable = (value) => {
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, 4, 5, 6, false] }],
-
     ["bold", "italic", "underline", "strike"],
-
     [{ color: [] }, { background: [] }],
-
     [{ script: "sub" }, { script: "super" }],
-
     [{ list: "ordered" }, { list: "bullet" }],
     [{ indent: "-1" }, { indent: "+1" }],
-
     [{ align: [] }],
-
     ["link", "image", "video"],
-
     ["blockquote", "code-block"],
-
-    ["clean"] // remove formatting
+    ["clean"],
   ],
 };
 
@@ -139,6 +128,9 @@ export const action = async ({ request, params }) => {
         ? parseInt(formData.get("flugelMax"))
         : null;
 
+      // NEW: flugelDependencyOptionId
+      const flugelDependencyOptionId = getNullable(formData.get("flugelDependencyOptionId"));
+
       const step = await prisma.configurationStep.create({
         data: {
           productId,
@@ -156,6 +148,7 @@ export const action = async ({ request, params }) => {
           measurementMode,
           flugelMin,
           flugelMax,
+          flugelDependencyOptionId,
         },
       });
 
@@ -197,6 +190,9 @@ export const action = async ({ request, params }) => {
         ? parseInt(formData.get("flugelMax"))
         : null;
 
+      // NEW: flugelDependencyOptionId
+      const flugelDependencyOptionId = getNullable(formData.get("flugelDependencyOptionId"));
+
       const step = await prisma.configurationStep.update({
         where: { id: stepId },
         data: {
@@ -213,6 +209,7 @@ export const action = async ({ request, params }) => {
           measurementMode,
           flugelMin,
           flugelMax,
+          flugelDependencyOptionId,
         },
       });
 
@@ -370,7 +367,6 @@ export default function ConfigureProduct() {
   const navigate = useNavigate();
   const shopify = useAppBridge();
 
-  // Refs for scrolling
   const stepFormRef = useRef(null);
   const optionFormRefs = useRef({});
 
@@ -379,6 +375,7 @@ export default function ConfigureProduct() {
   const [showOptionForm, setShowOptionForm] = useState(null);
   const [editingOption, setEditingOption] = useState(null);
 
+  // NEW: flugelDependencyOptionId added
   const [stepFormData, setStepFormData] = useState({
     key: "",
     type: "OPTIONS",
@@ -393,6 +390,7 @@ export default function ConfigureProduct() {
     measurementMode: "NORMAL",
     flugelMin: "",
     flugelMax: "",
+    flugelDependencyOptionId: "",
   });
 
   const handleQuillChange = (field, value) => {
@@ -429,6 +427,7 @@ export default function ConfigureProduct() {
     }
   }, [fetcher.data, shopify]);
 
+  // NEW: flugelDependencyOptionId reset added
   const resetForms = () => {
     setShowStepForm(false);
     setEditingStep(null);
@@ -448,6 +447,7 @@ export default function ConfigureProduct() {
       measurementMode: "NORMAL",
       flugelMin: "",
       flugelMax: "",
+      flugelDependencyOptionId: "",
     });
     setOptionFormData({
       value: "",
@@ -517,6 +517,7 @@ export default function ConfigureProduct() {
     }
   };
 
+  // NEW: flugelDependencyOptionId load in edit
   const handleEditStep = (step) => {
     setEditingStep(step);
     setStepFormData({
@@ -533,10 +534,10 @@ export default function ConfigureProduct() {
       measurementMode: step.measurementMode || "NORMAL",
       flugelMin: step.flugelMin?.toString() || "",
       flugelMax: step.flugelMax?.toString() || "",
+      flugelDependencyOptionId: step.flugelDependencyOptionId || "",
     });
     setShowStepForm(true);
 
-    // Scroll to form after a short delay to ensure it's rendered
     setTimeout(() => {
       stepFormRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -570,7 +571,6 @@ export default function ConfigureProduct() {
         : [],
     });
 
-    // Scroll to option form after a short delay
     setTimeout(() => {
       optionFormRefs.current[stepId]?.scrollIntoView({
         behavior: "smooth",
@@ -580,6 +580,7 @@ export default function ConfigureProduct() {
     }, 100);
   };
 
+  // NEW: flugelDependencyOptionId submit added
   const handleSaveStep = () => {
     const submitData = new FormData();
     submitData.append("action", editingStep ? "updateStep" : "createStep");
@@ -599,6 +600,7 @@ export default function ConfigureProduct() {
       submitData.append("measurementMode", stepFormData.measurementMode);
       submitData.append("flugelMin", stepFormData.flugelMin);
       submitData.append("flugelMax", stepFormData.flugelMax);
+      submitData.append("flugelDependencyOptionId", stepFormData.flugelDependencyOptionId || "");
     }
 
     fetcher.submit(submitData, { method: "POST" });
@@ -706,6 +708,15 @@ export default function ConfigureProduct() {
     );
   }
 
+  // NEW: collect all options from all steps for dependency dropdown
+  const allProductOptions = (product?.steps || []).flatMap((s) =>
+    (s.options || []).map((opt) => ({
+      ...opt,
+      stepTitle: s.title?.replace(/<[^>]*>/g, "") || s.key,
+      stepId: s.id,
+    }))
+  );
+
   return (
     <s-page heading={`Produktkonfiguration: ${product.name}`}>
       <div style={{ marginBottom: "15px" }}>
@@ -793,9 +804,12 @@ export default function ConfigureProduct() {
                 widthMax: "",
                 heightMin: "",
                 heightMax: "",
+                measurementMode: "NORMAL",
+                flugelMin: "",
+                flugelMax: "",
+                flugelDependencyOptionId: "",
               });
 
-              // Scroll to form if opening
               if (willShow) {
                 setTimeout(() => {
                   stepFormRef.current?.scrollIntoView({
@@ -846,14 +860,13 @@ export default function ConfigureProduct() {
 
                   <s-divider />
 
-                  {/* Step Type Selection - Visual Cards */}
+                  {/* Step Type Selection */}
                   <div style={{ padding: "10px" }}>
                     <s-text variant="bodyMd">
                       <strong>Schritttyp </strong>
                     </s-text>
                     <s-text variant="bodySm" tone="subdued">
-                      Wählen Sie aus, wie Kunden mit diesem Schritt interagieren
-                      sollen
+                      Wählen Sie aus, wie Kunden mit diesem Schritt interagieren sollen
                     </s-text>
                     <div
                       style={{
@@ -869,58 +882,34 @@ export default function ConfigureProduct() {
                         }
                         style={{
                           padding: "16px",
-                          border:
-                            stepFormData.type === "OPTIONS"
-                              ? "2px solid #008060"
-                              : "2px solid #e1e3e5",
+                          border: stepFormData.type === "OPTIONS" ? "2px solid #008060" : "2px solid #e1e3e5",
                           borderRadius: "8px",
                           cursor: "pointer",
-                          backgroundColor:
-                            stepFormData.type === "OPTIONS"
-                              ? "#f6f6f7"
-                              : "#fff",
+                          backgroundColor: stepFormData.type === "OPTIONS" ? "#f6f6f7" : "#fff",
                           transition: "all 0.2s",
                         }}
                       >
-                        <div style={{ fontSize: "24px", marginBottom: "8px" }}>
-                          📋
-                        </div>
-                        <s-text variant="bodyMd">
-                          <strong>Mehrfachauswahl </strong>
-                        </s-text>
+                        <div style={{ fontSize: "24px", marginBottom: "8px" }}>📋</div>
+                        <s-text variant="bodyMd"><strong>Mehrfachauswahl </strong></s-text>
                         <s-text variant="bodySm" tone="subdued">
-                          Kunden können aus vordefinierten Optionen
-                          auswählen{" "}
+                          Kunden können aus vordefinierten Optionen auswählen{" "}
                         </s-text>
                       </div>
                       <div
                         onClick={() =>
-                          setStepFormData({
-                            ...stepFormData,
-                            type: "MEASUREMENT",
-                          })
+                          setStepFormData({ ...stepFormData, type: "MEASUREMENT" })
                         }
                         style={{
                           padding: "16px",
-                          border:
-                            stepFormData.type === "MEASUREMENT"
-                              ? "2px solid #008060"
-                              : "2px solid #e1e3e5",
+                          border: stepFormData.type === "MEASUREMENT" ? "2px solid #008060" : "2px solid #e1e3e5",
                           borderRadius: "8px",
                           cursor: "pointer",
-                          backgroundColor:
-                            stepFormData.type === "MEASUREMENT"
-                              ? "#f6f6f7"
-                              : "#fff",
+                          backgroundColor: stepFormData.type === "MEASUREMENT" ? "#f6f6f7" : "#fff",
                           transition: "all 0.2s",
                         }}
                       >
-                        <div style={{ fontSize: "24px", marginBottom: "8px" }}>
-                          📏
-                        </div>
-                        <s-text variant="bodyMd">
-                          <strong>Maße </strong>
-                        </s-text>
+                        <div style={{ fontSize: "24px", marginBottom: "8px" }}>📏</div>
+                        <s-text variant="bodyMd"><strong>Maße </strong></s-text>
                         <s-text variant="bodySm" tone="subdued">
                           Kunden geben eine individuelle Breite und Höhe ein.
                         </s-text>
@@ -931,25 +920,15 @@ export default function ConfigureProduct() {
                         }
                         style={{
                           padding: "16px",
-                          border:
-                            stepFormData.type === "DROPDOWN"
-                              ? "2px solid #008060"
-                              : "2px solid #e1e3e5",
+                          border: stepFormData.type === "DROPDOWN" ? "2px solid #008060" : "2px solid #e1e3e5",
                           borderRadius: "8px",
                           cursor: "pointer",
-                          backgroundColor:
-                            stepFormData.type === "DROPDOWN"
-                              ? "#f6f6f7"
-                              : "#fff",
+                          backgroundColor: stepFormData.type === "DROPDOWN" ? "#f6f6f7" : "#fff",
                           transition: "all 0.2s",
                         }}
                       >
-                        <div style={{ fontSize: "24px", marginBottom: "8px" }}>
-                          🔽
-                        </div>
-                        <s-text variant="bodyMd">
-                          <strong>Dropdown</strong>
-                        </s-text>
+                        <div style={{ fontSize: "24px", marginBottom: "8px" }}>🔽</div>
+                        <s-text variant="bodyMd"><strong>Dropdown</strong></s-text>
                         <s-text variant="bodySm" tone="subdued">
                           Kunden wählen aus einer Dropdown-Liste
                         </s-text>
@@ -958,65 +937,41 @@ export default function ConfigureProduct() {
                   </div>
 
                   {/* Basic Information */}
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      padding: "16px",
-                      borderRadius: "8px",
-                    }}
-                  >
-                    <s-text variant="bodyMd">
-                      <strong>📝 Grundinformationen </strong>
-                    </s-text>
-                    <s-stack
-                      direction="block"
-                      gap="base"
-                      style={{ marginTop: "12px" }}
-                    >
+                  <div style={{ background: "#f9fafb", padding: "16px", borderRadius: "8px" }}>
+                    <s-text variant="bodyMd"><strong>📝 Grundinformationen </strong></s-text>
+                    <s-stack direction="block" gap="base" style={{ marginTop: "12px" }}>
                       <div>
-                        <label
-                          style={{ display: "block", marginBottom: "4px" }}
-                        >
+                        <label style={{ display: "block", marginBottom: "4px" }}>
                           <s-text variant="bodySm">
                             <strong>Anzeigetitel</strong>{" "}
                             <span style={{ color: "#bf0711" }}>*</span>
                           </s-text>
                         </label>
                         <s-text variant="bodySm" tone="subdued">
-                          Was Kunden sehen (e.g., "Fenstertyp", "Farbe
-                          auswählen")
+                          Was Kunden sehen (e.g., "Fenstertyp", "Farbe auswählen")
                         </s-text>
                         <div style={{ marginTop: "6px" }}>
                           {isClient && ReactQuill && (
                             <ReactQuill
                               value={stepFormData.title || ""}
-                              onChange={(value) =>
-                                handleQuillChange("title", value)
-                              }
+                              onChange={(value) => handleQuillChange("title", value)}
                               placeholder="e.g., Window Type"
                               modules={modules}
-                              style={{
-                                width: "95%",
-                                background: "#fff",
-                                borderRadius: "6px",
-                              }}
+                              style={{ width: "95%", background: "#fff", borderRadius: "6px" }}
                             />
                           )}
                         </div>
                       </div>
 
                       <div>
-                        <label
-                          style={{ display: "block", marginBottom: "4px" }}
-                        >
+                        <label style={{ display: "block", marginBottom: "4px" }}>
                           <s-text variant="bodySm">
                             <strong>Interner Schlüssel </strong>{" "}
                             <span style={{ color: "#bf0711" }}>*</span>
                           </s-text>
                         </label>
                         <s-text variant="bodySm" tone="subdued">
-                          Eindeutiger Bezeichner (kleingeschrieben, keine
-                          Leerzeichen, e.g., "window_type")
+                          Eindeutiger Bezeichner (kleingeschrieben, keine Leerzeichen, e.g., "window_type")
                         </s-text>
                         <input
                           type="text"
@@ -1024,9 +979,7 @@ export default function ConfigureProduct() {
                           onChange={(e) =>
                             setStepFormData({
                               ...stepFormData,
-                              key: e.target.value
-                                .toLowerCase()
-                                .replace(/\s/g, "_"),
+                              key: e.target.value.toLowerCase().replace(/\s/g, "_"),
                             })
                           }
                           placeholder="e.g., window_type"
@@ -1044,25 +997,16 @@ export default function ConfigureProduct() {
                       </div>
 
                       <div>
-                        <label
-                          style={{ display: "block", marginBottom: "4px" }}
-                        >
-                          <s-text variant="bodySm">
-                            <strong>Untertitel</strong> (Optional)
-                          </s-text>
+                        <label style={{ display: "block", marginBottom: "4px" }}>
+                          <s-text variant="bodySm"><strong>Untertitel</strong> (Optional)</s-text>
                         </label>
                         <s-text variant="bodySm" tone="subdued">
                           Schritt-Fortschrittsanzeige (e.g., "Schritt 1 von 3")
                         </s-text>
-                        <div
-                          className="custom-quill-wrapper"
-                          style={{ marginTop: "12px" }}
-                        >
+                        <div className="custom-quill-wrapper" style={{ marginTop: "12px" }}>
                           <ReactQuill
                             value={stepFormData.subtitle || ""}
-                            onChange={(value) =>
-                              handleQuillChange("subtitle", value)
-                            }
+                            onChange={(value) => handleQuillChange("subtitle", value)}
                             placeholder="e.g., Choose your style"
                             modules={modules}
                           />
@@ -1070,26 +1014,17 @@ export default function ConfigureProduct() {
                       </div>
 
                       <div>
-                        <label
-                          style={{ display: "block", marginBottom: "4px" }}
-                        >
-                          <s-text variant="bodySm">
-                            <strong>Beschreibung</strong> (Optional)
-                          </s-text>
+                        <label style={{ display: "block", marginBottom: "4px" }}>
+                          <s-text variant="bodySm"><strong>Beschreibung</strong> (Optional)</s-text>
                         </label>
                         <s-text variant="bodySm" tone="subdued">
                           Zusätzlicher Hilfetext für Kunden{" "}
                         </s-text>
-                        <div
-                          className="custom-quill-wrapper"
-                          style={{ marginTop: "12px" }}
-                        >
+                        <div className="custom-quill-wrapper" style={{ marginTop: "12px" }}>
                           {isClient && ReactQuill && (
                             <ReactQuill
                               value={stepFormData.description || ""}
-                              onChange={(value) =>
-                                handleQuillChange("description", value)
-                              }
+                              onChange={(value) => handleQuillChange("description", value)}
                               placeholder="Enter description..."
                               modules={modules}
                             />
@@ -1098,16 +1033,11 @@ export default function ConfigureProduct() {
                       </div>
 
                       <div>
-                        <label
-                          style={{ display: "block", marginBottom: "4px" }}
-                        >
-                          <s-text variant="bodySm">
-                            <strong>🖼️ Schrittbild</strong> (Optional)
-                          </s-text>
+                        <label style={{ display: "block", marginBottom: "4px" }}>
+                          <s-text variant="bodySm"><strong>🖼️ Schrittbild</strong> (Optional)</s-text>
                         </label>
                         <s-text variant="bodySm" tone="subdued">
-                          Laden Sie ein Bild hoch, das oben in diesem Schritt
-                          angezeigt wird{" "}
+                          Laden Sie ein Bild hoch, das oben in diesem Schritt angezeigt wird{" "}
                         </s-text>
                         <input
                           type="file"
@@ -1125,28 +1055,13 @@ export default function ConfigureProduct() {
                           }}
                         />
                         {uploadingStepImage && (
-                          <div
-                            style={{
-                              marginTop: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
+                          <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
                             <s-spinner size="small" />
-                            <s-text variant="bodySm">
-                              Bild wird hochgeladen...
-                            </s-text>
+                            <s-text variant="bodySm">Bild wird hochgeladen...</s-text>
                           </div>
                         )}
                         {stepFormData.image && (
-                          <div
-                            style={{
-                              marginTop: "12px",
-                              position: "relative",
-                              display: "inline-block",
-                            }}
-                          >
+                          <div style={{ marginTop: "12px", position: "relative", display: "inline-block" }}>
                             <img
                               src={stepFormData.image}
                               alt="Preview"
@@ -1158,9 +1073,7 @@ export default function ConfigureProduct() {
                               }}
                             />
                             <button
-                              onClick={() =>
-                                setStepFormData({ ...stepFormData, image: "" })
-                              }
+                              onClick={() => setStepFormData({ ...stepFormData, image: "" })}
                               style={{
                                 position: "absolute",
                                 top: "8px",
@@ -1183,157 +1096,16 @@ export default function ConfigureProduct() {
                     </s-stack>
                   </div>
 
-                  {/* Measurement Ranges (only for MEASUREMENT type) */}
-                  {/* {stepFormData.type === "MEASUREMENT" && (
-                    <div
-                      style={{
-                        background: "#f9fafb",
-                        padding: "16px",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <s-text variant="bodyMd">
-                        <strong>📏 Messbereiche (in Millimetern) </strong>
-                      </s-text>
-                      <s-text variant="bodySm" tone="subdued">
-                        Legen Sie die minimalen und maximalen Werte fest, die
-                        Kunden eingeben können.
-                      </s-text>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "16px",
-                          marginTop: "12px",
-                        }}
-                      >
-                        <div>
-                          <label
-                            style={{ display: "block", marginBottom: "4px" }}
-                          >
-                            <s-text variant="bodySm">
-                              <strong>Breite – Minimum (mm)</strong>
-                            </s-text>
-                          </label>
-                          <input
-                            type="number"
-                            value={stepFormData.widthMin}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                widthMin: e.target.value,
-                              })
-                            }
-                            placeholder="e.g., 300"
-                            style={{
-                              width: "95%",
-                              padding: "10px 12px",
-                              border: "1px solid #c9cccf",
-                              borderRadius: "6px",
-                              fontSize: "14px",
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            style={{ display: "block", marginBottom: "4px" }}
-                          >
-                            <s-text variant="bodySm">
-                              <strong>Breite - Maximum (mm)</strong>
-                            </s-text>
-                          </label>
-                          <input
-                            type="number"
-                            value={stepFormData.widthMax}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                widthMax: e.target.value,
-                              })
-                            }
-                            placeholder="e.g., 2000"
-                            style={{
-                              width: "95%",
-                              padding: "10px 12px",
-                              border: "1px solid #c9cccf",
-                              borderRadius: "6px",
-                              fontSize: "14px",
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            style={{ display: "block", marginBottom: "4px" }}
-                          >
-                            <s-text variant="bodySm">
-                              <strong>Höhe - Minimum (mm)</strong>
-                            </s-text>
-                          </label>
-                          <input
-                            type="number"
-                            value={stepFormData.heightMin}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                heightMin: e.target.value,
-                              })
-                            }
-                            placeholder="e.g., 400"
-                            style={{
-                              width: "95%",
-                              padding: "10px 12px",
-                              border: "1px solid #c9cccf",
-                              borderRadius: "6px",
-                              fontSize: "14px",
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            style={{ display: "block", marginBottom: "4px" }}
-                          >
-                            <s-text variant="bodySm">
-                              <strong>Höhe - Maximum (mm)</strong>
-                            </s-text>
-                          </label>
-                          <input
-                            type="number"
-                            value={stepFormData.heightMax}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                heightMax: e.target.value,
-                              })
-                            }
-                            placeholder="e.g., 2000"
-                            style={{
-                              width: "95%",
-                              padding: "10px 12px",
-                              border: "1px solid #c9cccf",
-                              borderRadius: "6px",
-                              fontSize: "14px",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )} */}
-
+                  {/* ============================================
+                      MEASUREMENT SECTION — UPDATED WITH FLUGEL DEPENDENCY
+                  ============================================ */}
                   {stepFormData.type === "MEASUREMENT" && (
-                    <div
-                      style={{
-                        background: "#f9fafb",
-                        padding: "16px",
-                        borderRadius: "8px",
-                      }}
-                    >
+                    <div style={{ background: "#f9fafb", padding: "16px", borderRadius: "8px" }}>
                       <s-text variant="bodyMd">
                         <strong>📏 Messbereiche (in Millimetern)</strong>
                       </s-text>
                       <s-text variant="bodySm" tone="subdued">
-                        Legen Sie die minimalen und maximalen Werte fest, die
-                        Kunden eingeben können.
+                        Legen Sie die minimalen und maximalen Werte fest, die Kunden eingeben können.
                       </s-text>
 
                       {/* WIDTH + HEIGHT GRID */}
@@ -1345,105 +1117,74 @@ export default function ConfigureProduct() {
                           marginTop: "12px",
                         }}
                       >
-                        {/* WIDTH MIN */}
                         <div>
                           <label>
-                            <s-text variant="bodySm">
-                              <strong>Breite – Minimum (mm)</strong>
-                            </s-text>
+                            <s-text variant="bodySm"><strong>Breite – Minimum (mm)</strong></s-text>
                           </label>
                           <input
                             type="number"
                             value={stepFormData.widthMin}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                widthMin: e.target.value,
-                              })
-                            }
+                            onChange={(e) => setStepFormData({ ...stepFormData, widthMin: e.target.value })}
                             placeholder="e.g., 300"
                             style={inputStyle}
                           />
                         </div>
 
-                        {/* WIDTH MAX */}
                         <div>
                           <label>
-                            <s-text variant="bodySm">
-                              <strong>Breite – Maximum (mm)</strong>
-                            </s-text>
+                            <s-text variant="bodySm"><strong>Breite – Maximum (mm)</strong></s-text>
                           </label>
                           <input
                             type="number"
                             value={stepFormData.widthMax}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                widthMax: e.target.value,
-                              })
-                            }
+                            onChange={(e) => setStepFormData({ ...stepFormData, widthMax: e.target.value })}
                             placeholder="e.g., 2000"
                             style={inputStyle}
                           />
                         </div>
 
-                        {/* HEIGHT MIN */}
                         <div>
                           <label>
-                            <s-text variant="bodySm">
-                              <strong>Höhe – Minimum (mm)</strong>
-                            </s-text>
+                            <s-text variant="bodySm"><strong>Höhe – Minimum (mm)</strong></s-text>
                           </label>
                           <input
                             type="number"
                             value={stepFormData.heightMin}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                heightMin: e.target.value,
-                              })
-                            }
+                            onChange={(e) => setStepFormData({ ...stepFormData, heightMin: e.target.value })}
                             placeholder="e.g., 400"
                             style={inputStyle}
                           />
                         </div>
 
-                        {/* HEIGHT MAX */}
                         <div>
                           <label>
-                            <s-text variant="bodySm">
-                              <strong>Höhe – Maximum (mm)</strong>
-                            </s-text>
+                            <s-text variant="bodySm"><strong>Höhe – Maximum (mm)</strong></s-text>
                           </label>
                           <input
                             type="number"
                             value={stepFormData.heightMax}
-                            onChange={(e) =>
-                              setStepFormData({
-                                ...stepFormData,
-                                heightMax: e.target.value,
-                              })
-                            }
+                            onChange={(e) => setStepFormData({ ...stepFormData, heightMax: e.target.value })}
                             placeholder="e.g., 2000"
                             style={inputStyle}
                           />
                         </div>
                       </div>
 
-                      {/* 🔽 MEASUREMENT MODE */}
+                      {/* MEASUREMENT MODE */}
                       <div style={{ marginTop: "20px" }}>
                         <label>
-                          <s-text variant="bodySm">
-                            <strong>Measurement Mode</strong>
-                          </s-text>
+                          <s-text variant="bodySm"><strong>Measurement Mode</strong></s-text>
                         </label>
-
                         <select
                           value={stepFormData.measurementMode || "NORMAL"}
                           onChange={(e) =>
                             setStepFormData({
                               ...stepFormData,
                               measurementMode: e.target.value,
+                              // reset flugel fields when switching mode
+                              flugelMin: "",
+                              flugelMax: "",
+                              flugelDependencyOptionId: "",
                             })
                           }
                           style={{
@@ -1459,56 +1200,144 @@ export default function ConfigureProduct() {
                         </select>
                       </div>
 
-                      {/* 🔽 FLUGEL FIELDS */}
+                      {/* ============================================
+                          FLUGEL FIELDS — NEW: + DEPENDENCY DROPDOWN
+                      ============================================ */}
                       {stepFormData.measurementMode === "FLUGEL" && (
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "1fr 1fr",
-                            gap: "16px",
-                            marginTop: "16px",
-                          }}
-                        >
-                          <div>
-                            <label>
-                              <s-text variant="bodySm">
-                                <strong>Flügel Minimum</strong>
-                              </s-text>
-                            </label>
-                            <input
-                              type="number"
-                              value={stepFormData.flugelMin}
-                              onChange={(e) =>
-                                setStepFormData({
-                                  ...stepFormData,
-                                  flugelMin: e.target.value,
-                                })
-                              }
-                              placeholder="e.g., 1"
-                              style={inputStyle}
-                            />
+                        <>
+                          {/* Flügel Min / Max */}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "16px",
+                              marginTop: "16px",
+                            }}
+                          >
+                            <div>
+                              <label>
+                                <s-text variant="bodySm"><strong>Flügel Minimum (mm)</strong></s-text>
+                              </label>
+                              <input
+                                type="number"
+                                value={stepFormData.flugelMin}
+                                onChange={(e) => setStepFormData({ ...stepFormData, flugelMin: e.target.value })}
+                                placeholder="e.g., 1"
+                                style={inputStyle}
+                              />
+                            </div>
+
+                            <div>
+                              <label>
+                                <s-text variant="bodySm"><strong>Flügel Maximum (mm)</strong></s-text>
+                              </label>
+                              <input
+                                type="number"
+                                value={stepFormData.flugelMax}
+                                onChange={(e) => setStepFormData({ ...stepFormData, flugelMax: e.target.value })}
+                                placeholder="e.g., 4"
+                                style={inputStyle}
+                              />
+                            </div>
                           </div>
 
-                          <div>
-                            <label>
-                              <s-text variant="bodySm">
-                                <strong>Flügel Maximum</strong>
+                          {/* NEW: Dependency Option Dropdown */}
+                          <div
+                            style={{
+                              marginTop: "20px",
+                              padding: "16px",
+                              background: "#fff8e1",
+                              borderRadius: "8px",
+                              border: "1px solid #f0c14b",
+                            }}
+                          >
+                            <s-text variant="bodyMd">
+                              <strong>🔗 Flügel Dependency (Abhängigkeit)</strong>
+                            </s-text>
+                            <div style={{ marginTop: "4px" }}>
+                              <s-text variant="bodySm" tone="subdued">
+                                Wählen Sie eine Option aus einem anderen Schritt. Nur wenn der Kunde
+                                diese Option wählt, wird das Flügel-Maßfeld angezeigt.
+                                Alle anderen Optionen zeigen nur Breite + Höhe.
                               </s-text>
-                            </label>
-                            <input
-                              type="number"
-                              value={stepFormData.flugelMax}
-                              onChange={(e) =>
-                                setStepFormData({
-                                  ...stepFormData,
-                                  flugelMax: e.target.value,
-                                })
-                              }
-                              placeholder="e.g., 4"
-                              style={inputStyle}
-                            />
+                            </div>
+
+                            {allProductOptions.length === 0 ? (
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  padding: "10px",
+                                  background: "#f9fafb",
+                                  borderRadius: "6px",
+                                  border: "1px dashed #c9cccf",
+                                }}
+                              >
+                                <s-text variant="bodySm" tone="subdued">
+                                  ⚠️ Noch keine Optionen in anderen Schritten vorhanden.
+                                  Bitte zuerst andere Schritte mit Optionen anlegen,
+                                  dann hier die Abhängigkeit setzen.
+                                </s-text>
+                              </div>
+                            ) : (
+                              <select
+                                value={stepFormData.flugelDependencyOptionId || ""}
+                                onChange={(e) =>
+                                  setStepFormData({
+                                    ...stepFormData,
+                                    flugelDependencyOptionId: e.target.value,
+                                  })
+                                }
+                                style={{
+                                  width: "95%",
+                                  padding: "10px",
+                                  marginTop: "10px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #c9cccf",
+                                  fontSize: "14px",
+                                  backgroundColor: "#fff",
+                                }}
+                              >
+                                <option value="">
+                                  -- Keine Dependency (Flügel immer anzeigen) --
+                                </option>
+                                {allProductOptions.map((opt) => (
+                                  <option key={opt.id} value={opt.id}>
+                                    [{opt.stepTitle}] → {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+
+                            {/* Show currently selected dependency info */}
+                            {stepFormData.flugelDependencyOptionId && (
+                              <div
+                                style={{
+                                  marginTop: "10px",
+                                  padding: "8px 12px",
+                                  background: "#e6f4ea",
+                                  borderRadius: "6px",
+                                  border: "1px solid #a8d5b5",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                <span>✅</span>
+                                <s-text variant="bodySm">
+                                  <strong>Flügel wird angezeigt wenn: </strong>
+                                  {(() => {
+                                    const found = allProductOptions.find(
+                                      (o) => o.id === stepFormData.flugelDependencyOptionId
+                                    );
+                                    return found
+                                      ? `"${found.label}" (aus Schritt: ${found.stepTitle})`
+                                      : "Ausgewählte Option";
+                                  })()}
+                                </s-text>
+                              </div>
+                            )}
                           </div>
-                        </div>
+                        </>
                       )}
                     </div>
                   )}
@@ -1523,9 +1352,7 @@ export default function ConfigureProduct() {
                       {...(isLoading ? { loading: true } : {})}
                       disabled={!stepFormData.key || !stepFormData.title}
                     >
-                      {editingStep
-                        ? "💾 Schritt aktualisieren"
-                        : "✓ Schritt erstellen"}
+                      {editingStep ? "💾 Schritt aktualisieren" : "✓ Schritt erstellen"}
                     </s-button>
                     <s-button
                       variant="tertiary"
@@ -1555,8 +1382,7 @@ export default function ConfigureProduct() {
                 Noch keine Konfigurationsschritte vorhanden{" "}
               </s-heading>
               <s-text tone="subdued">
-                Beginnen Sie, indem Sie oben Ihren ersten Konfigurationsschritt
-                erstellen{" "}
+                Beginnen Sie, indem Sie oben Ihren ersten Konfigurationsschritt erstellen{" "}
               </s-text>
             </s-box>
           ) : (
@@ -1579,8 +1405,8 @@ export default function ConfigureProduct() {
                             justifyContent: "space-between",
                             alignItems: "flex-start",
                             padding: "12px",
-                            flexDirection:"column",
-                            gap:"10px",
+                            flexDirection: "column",
+                            gap: "10px",
                           }}
                         >
                           <div style={{ flex: 1 }}>
@@ -1593,7 +1419,14 @@ export default function ConfigureProduct() {
                               }}
                             >
                               <s-badge tone="info">Step {step.order}</s-badge>
-                              <div variant="headingMd" style={{ display: "inline-block", maxWidth: "340px", wordBreak: "break-all", }}>
+                              <div
+                                variant="headingMd"
+                                style={{
+                                  display: "inline-block",
+                                  maxWidth: "340px",
+                                  wordBreak: "break-all",
+                                }}
+                              >
                                 {step.title}
                               </div>
                               <s-badge
@@ -1601,15 +1434,15 @@ export default function ConfigureProduct() {
                                   step.type === "OPTIONS"
                                     ? "success"
                                     : step.type === "DROPDOWN"
-                                      ? "info"
-                                      : "attention"
+                                    ? "info"
+                                    : "attention"
                                 }
                               >
                                 {step.type === "OPTIONS"
                                   ? "📋 Multiple Choice"
                                   : step.type === "DROPDOWN"
-                                    ? "🔽 Dropdown"
-                                    : "📏 Measurements"}
+                                  ? "🔽 Dropdown"
+                                  : "📏 Measurements"}
                               </s-badge>
                             </div>
                             {step.subtitle && (
@@ -1650,10 +1483,7 @@ export default function ConfigureProduct() {
                               </s-text>
                               <s-text
                                 variant="bodyMd"
-                                style={{
-                                  fontFamily: "monospace",
-                                  fontSize: "13px",
-                                }}
+                                style={{ fontFamily: "monospace", fontSize: "13px" }}
                               >
                                 {step.key}{" "}
                               </s-text>
@@ -1663,9 +1493,7 @@ export default function ConfigureProduct() {
                                 <s-text variant="bodySm" tone="subdued">
                                   Beschreibung{" "}
                                 </s-text>
-                                <s-text variant="bodyMd">
-                                  {step.description}
-                                </s-text>
+                                <s-text variant="bodyMd">{step.description}</s-text>
                               </div>
                             )}
                           </s-stack>
@@ -1702,7 +1530,7 @@ export default function ConfigureProduct() {
                           </div>
                         )}
 
-                        {/* Measurement Ranges Display */}
+                        {/* Measurement Ranges Display — NEW: shows flugel dependency info */}
                         {step.type === "MEASUREMENT" && (
                           <div
                             style={{
@@ -1723,32 +1551,55 @@ export default function ConfigureProduct() {
                               }}
                             >
                               <div>
-                                <s-text variant="bodySm" tone="subdued">
-                                  Breite - Bereich
-                                </s-text>
+                                <s-text variant="bodySm" tone="subdued">Breite - Bereich</s-text>
                                 <s-text variant="bodyMd">
-                                  <strong>
-                                    {step.widthMin} mm - {step.widthMax} mm
-                                  </strong>
+                                  <strong>{step.widthMin} mm - {step.widthMax} mm</strong>
                                 </s-text>
                               </div>
                               <div>
-                                <s-text variant="bodySm" tone="subdued">
-                                  Höhe - Bereich
-                                </s-text>
+                                <s-text variant="bodySm" tone="subdued">Höhe - Bereich</s-text>
                                 <s-text variant="bodyMd">
-                                  <strong>
-                                    {step.heightMin} mm - {step.heightMax} mm
-                                  </strong>
+                                  <strong>{step.heightMin} mm - {step.heightMax} mm</strong>
                                 </s-text>
                               </div>
+                              {/* NEW: show flugel info if FLUGEL mode */}
+                              {step.measurementMode === "FLUGEL" && (
+                                <>
+                                  <div>
+                                    <s-text variant="bodySm" tone="subdued">Flügel - Bereich</s-text>
+                                    <s-text variant="bodyMd">
+                                      <strong>{step.flugelMin} mm - {step.flugelMax} mm</strong>
+                                    </s-text>
+                                  </div>
+                                  <div>
+                                    <s-text variant="bodySm" tone="subdued">Flügel Dependency</s-text>
+                                    <s-text variant="bodyMd">
+                                      {step.flugelDependencyOptionId ? (
+                                        (() => {
+                                          const depOpt = allProductOptions.find(
+                                            (o) => o.id === step.flugelDependencyOptionId
+                                          );
+                                          return depOpt ? (
+                                            <s-badge tone="warning">
+                                              {depOpt.label} ({depOpt.stepTitle})
+                                            </s-badge>
+                                          ) : (
+                                            <s-badge tone="critical">Option nicht gefunden</s-badge>
+                                          );
+                                        })()
+                                      ) : (
+                                        <s-badge tone="info">Immer anzeigen</s-badge>
+                                      )}
+                                    </s-text>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
 
-                        {/* Options Section (for OPTIONS type) */}
-                        {(step.type === "OPTIONS" ||
-                          step.type === "DROPDOWN") && (
+                        {/* Options Section */}
+                        {(step.type === "OPTIONS" || step.type === "DROPDOWN") && (
                           <>
                             <s-divider />
                             <div style={{ margin: "10px" }}>
@@ -1779,11 +1630,8 @@ export default function ConfigureProduct() {
                                       showSteps: "",
                                     });
 
-                                    // Scroll to option form
                                     setTimeout(() => {
-                                      optionFormRefs.current[
-                                        step.id
-                                      ]?.scrollIntoView({
+                                      optionFormRefs.current[step.id]?.scrollIntoView({
                                         behavior: "smooth",
                                         block: "center",
                                         inline: "nearest",
@@ -1805,34 +1653,17 @@ export default function ConfigureProduct() {
                                     border: "2px dashed #e1e3e5",
                                   }}
                                 >
-                                  <div
-                                    style={{
-                                      fontSize: "32px",
-                                      marginBottom: "8px",
-                                    }}
-                                  >
-                                    🎯
-                                  </div>
+                                  <div style={{ fontSize: "32px", marginBottom: "8px" }}>🎯</div>
                                   <s-text tone="subdued">
-                                    Noch keine Auswahl hinzugefügt. Optionen für
-                                    Kunden hinzufügen.
+                                    Noch keine Auswahl hinzugefügt. Optionen für Kunden hinzufügen.
                                   </s-text>
                                 </div>
                               ) : (
                                 <s-stack direction="block" gap="tight">
-                                  <DndContext
-                                    onDragEnd={(e) =>
-                                      handleOptionDragEnd(e, step)
-                                    }
-                                  >
-                                    <SortableContext
-                                      items={step.options.map((o) => o.id)}
-                                    >
+                                  <DndContext onDragEnd={(e) => handleOptionDragEnd(e, step)}>
+                                    <SortableContext items={step.options.map((o) => o.id)}>
                                       {step.options.map((option) => (
-                                        <SortableItem
-                                          key={option.id}
-                                          id={option.id}
-                                        >
+                                        <SortableItem key={option.id} id={option.id}>
                                           <div
                                             className="sjdfjsdfdh"
                                             key={option.id}
@@ -1844,13 +1675,7 @@ export default function ConfigureProduct() {
                                               border: "1px solid #e1e3e5",
                                             }}
                                           >
-                                            <div
-                                              style={{
-                                                display: "flex",
-                                                gap: "16px",
-                                              }}
-                                            >
-                                              {/* Option Image */}
+                                            <div style={{ display: "flex", gap: "16px" }}>
                                               {option.image && (
                                                 <div style={{ flexShrink: 0 }}>
                                                   <img
@@ -1861,14 +1686,12 @@ export default function ConfigureProduct() {
                                                       height: "80px",
                                                       objectFit: "cover",
                                                       borderRadius: "6px",
-                                                      border:
-                                                        "1px solid #e1e3e5",
+                                                      border: "1px solid #e1e3e5",
                                                     }}
                                                   />
                                                 </div>
                                               )}
 
-                                              {/* Option Details */}
                                               <div style={{ flex: 1 }}>
                                                 <div
                                                   style={{
@@ -1876,49 +1699,29 @@ export default function ConfigureProduct() {
                                                     alignItems: "center",
                                                     gap: "8px",
                                                     marginBottom: "6px",
-                                                    justifyContent:
-                                                      "space-between",
+                                                    justifyContent: "space-between",
                                                   }}
                                                 >
                                                   <div
                                                     className="price-text"
-                                                    style={{
-                                                      display: "flex",
-                                                      gap: "6px",
-                                                    }}
+                                                    style={{ display: "flex", gap: "6px" }}
                                                   >
                                                     <s-text variant="bodyMd">
-                                                      <strong>
-                                                        {option.label}
-                                                      </strong>
+                                                      <strong>{option.label}</strong>
                                                     </s-text>
                                                     {option.price > 0 && (
                                                       <s-badge tone="success">
-                                                        +€
-                                                        {option.price.toFixed(
-                                                          2,
-                                                        )}
+                                                        +€{option.price.toFixed(2)}
                                                       </s-badge>
                                                     )}
                                                   </div>
-                                                  {/* Option Actions */}
-                                                  <div
-                                                    style={{
-                                                      display: "flex",
-                                                      gap: "6px",
-                                                    }}
-                                                  >
+                                                  <div style={{ display: "flex", gap: "6px" }}>
                                                     <s-button
                                                       variant="secondary"
                                                       size="slim"
                                                       onClick={() => {
-                                                        setShowOptionForm(
-                                                          step.id,
-                                                        );
-                                                        handleEditOption(
-                                                          option,
-                                                          step.id,
-                                                        );
+                                                        setShowOptionForm(step.id);
+                                                        handleEditOption(option, step.id);
                                                       }}
                                                     >
                                                       Bearbeiten
@@ -1927,11 +1730,7 @@ export default function ConfigureProduct() {
                                                       variant="tertiary"
                                                       tone="critical"
                                                       size="slim"
-                                                      onClick={() =>
-                                                        handleDeleteOption(
-                                                          option.id,
-                                                        )
-                                                      }
+                                                      onClick={() => handleDeleteOption(option.id)}
                                                     >
                                                       Löschen
                                                     </s-button>
@@ -1968,10 +1767,7 @@ export default function ConfigureProduct() {
                                                 {option.description && (
                                                   <s-text
                                                     variant="bodySm"
-                                                    style={{
-                                                      display: "block",
-                                                      marginBottom: "6px",
-                                                    }}
+                                                    style={{ display: "block", marginBottom: "6px" }}
                                                   >
                                                     {option.description}
                                                   </s-text>
@@ -1980,57 +1776,30 @@ export default function ConfigureProduct() {
                                                 {option.showSteps && (
                                                   <div
                                                     style={{
-                                                      // background: '#e0f2fe',
                                                       padding: "8px 12px",
                                                       borderRadius: "4px",
                                                       marginTop: "8px",
-                                                      // display: 'inline-block'
                                                     }}
                                                   >
-                                                    {/* <s-text variant="bodySm"><strong>Nächste Schritte: </strong> {option.showSteps}</s-text> */}
                                                     {option.showSteps &&
                                                       (() => {
                                                         let steps = [];
-
                                                         try {
-                                                          steps = JSON.parse(
-                                                            option.showSteps,
-                                                          );
+                                                          steps = JSON.parse(option.showSteps);
                                                         } catch (e) {
                                                           return null;
                                                         }
-
                                                         return (
                                                           <div>
                                                             <s-text variant="bodySm">
-                                                              <strong>
-                                                                Nächste
-                                                                Schritte:
-                                                              </strong>
+                                                              <strong>Nächste Schritte:</strong>
                                                             </s-text>
-
-                                                            <ul
-                                                              style={{
-                                                                marginTop:
-                                                                  "6px",
-                                                                paddingLeft:
-                                                                  "18px",
-                                                              }}
-                                                            >
-                                                              {steps.map(
-                                                                (
-                                                                  step,
-                                                                  index,
-                                                                ) => (
-                                                                  <li
-                                                                    key={index}
-                                                                  >
-                                                                    <s-text variant="bodySm">
-                                                                      {step}
-                                                                    </s-text>
-                                                                  </li>
-                                                                ),
-                                                              )}
+                                                            <ul style={{ marginTop: "6px", paddingLeft: "18px" }}>
+                                                              {steps.map((step, index) => (
+                                                                <li key={index}>
+                                                                  <s-text variant="bodySm">{step}</s-text>
+                                                                </li>
+                                                              ))}
                                                             </ul>
                                                           </div>
                                                         );
@@ -2050,9 +1819,7 @@ export default function ConfigureProduct() {
                               {/* Option Form */}
                               {showOptionForm === step.id && (
                                 <div
-                                  ref={(el) =>
-                                    (optionFormRefs.current[step.id] = el)
-                                  }
+                                  ref={(el) => (optionFormRefs.current[step.id] = el)}
                                   style={{ scrollMarginTop: "20px" }}
                                 >
                                   <s-box
@@ -2080,11 +1847,7 @@ export default function ConfigureProduct() {
                                             ? "✏️ Auswahl bearbeiten"
                                             : "➕ Neue Auswahl hinzufügen"}
                                         </s-heading>
-                                        <s-badge
-                                          tone={
-                                            editingOption ? "warning" : "info"
-                                          }
-                                        >
+                                        <s-badge tone={editingOption ? "warning" : "info"}>
                                           {editingOption ? "Bearbeiten" : "Neu"}
                                         </s-badge>
                                       </div>
@@ -2092,31 +1855,20 @@ export default function ConfigureProduct() {
                                       <s-divider />
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
                                           <s-text variant="bodySm">
                                             <strong>Auswahlbezeichnung </strong>{" "}
-                                            <span style={{ color: "#bf0711" }}>
-                                              *
-                                            </span>
+                                            <span style={{ color: "#bf0711" }}>*</span>
                                           </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
-                                          Was Kunden sehen (e.g.,
-                                          "Standardfenster"){" "}
+                                          Was Kunden sehen (e.g., "Standardfenster"){" "}
                                         </s-text>
                                         <input
                                           type="text"
                                           value={optionFormData.label}
                                           onChange={(e) =>
-                                            setOptionFormData({
-                                              ...optionFormData,
-                                              label: e.target.value,
-                                            })
+                                            setOptionFormData({ ...optionFormData, label: e.target.value })
                                           }
                                           placeholder="e.g., Standard Window"
                                           required
@@ -2132,22 +1884,14 @@ export default function ConfigureProduct() {
                                       </div>
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
                                           <s-text variant="bodySm">
                                             <strong>Interner Wert </strong>{" "}
-                                            <span style={{ color: "#bf0711" }}>
-                                              *
-                                            </span>
+                                            <span style={{ color: "#bf0711" }}>*</span>
                                           </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
-                                          Eindeutiger Code für diese Auswahl
-                                          (klein, keine Leerzeichen)
+                                          Eindeutiger Code für diese Auswahl (klein, keine Leerzeichen)
                                         </s-text>
                                         <input
                                           type="text"
@@ -2155,9 +1899,7 @@ export default function ConfigureProduct() {
                                           onChange={(e) =>
                                             setOptionFormData({
                                               ...optionFormData,
-                                              value: e.target.value
-                                                .toLowerCase()
-                                                .replace(/\s/g, "_"),
+                                              value: e.target.value.toLowerCase().replace(/\s/g, "_"),
                                             })
                                           }
                                           placeholder="e.g., standard_window"
@@ -2175,15 +1917,8 @@ export default function ConfigureProduct() {
                                       </div>
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
-                                          <s-text variant="bodySm">
-                                            <strong>SKU</strong> (Optional)
-                                          </s-text>
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
+                                          <s-text variant="bodySm"><strong>SKU</strong> (Optional)</s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
                                           Artikelnummer für diese Auswahl
@@ -2192,10 +1927,7 @@ export default function ConfigureProduct() {
                                           type="text"
                                           value={optionFormData.sku}
                                           onChange={(e) =>
-                                            setOptionFormData({
-                                              ...optionFormData,
-                                              sku: e.target.value,
-                                            })
+                                            setOptionFormData({ ...optionFormData, sku: e.target.value })
                                           }
                                           placeholder="e.g., SKU-12345"
                                           style={{
@@ -2209,44 +1941,30 @@ export default function ConfigureProduct() {
                                           }}
                                         />
                                       </div>
+
                                       {step.type === "DROPDOWN" && (
                                         <div>
                                           <label>
                                             <s-text variant="bodySm">
-                                              <strong>
-                                                Parent Option (Dependency)
-                                              </strong>
+                                              <strong>Parent Option (Dependency)</strong>
                                             </s-text>
                                           </label>
-
                                           <select
                                             multiple
-                                            value={
-                                              optionFormData.parentOptionIds ||
-                                              []
-                                            }
+                                            value={optionFormData.parentOptionIds || []}
                                             onChange={(e) => {
                                               const selected = Array.from(
                                                 e.target.selectedOptions,
                                                 (o) => o.value,
                                               );
-
-                                              setOptionFormData({
-                                                ...optionFormData,
-                                                parentOptionIds: selected,
-                                              });
+                                              setOptionFormData({ ...optionFormData, parentOptionIds: selected });
                                             }}
                                           >
                                             {product.steps
-                                              .filter(
-                                                (s) => s.order < step.order,
-                                              )
+                                              .filter((s) => s.order < step.order)
                                               .flatMap((s) => s.options)
                                               .map((opt) => (
-                                                <option
-                                                  key={opt.id}
-                                                  value={opt.id}
-                                                >
+                                                <option key={opt.id} value={opt.id}>
                                                   {opt.label}
                                                 </option>
                                               ))}
@@ -2255,72 +1973,39 @@ export default function ConfigureProduct() {
                                       )}
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
                                           <s-text variant="bodySm">
-                                            <strong>Beschreibung</strong>{" "}
-                                            (Optional)
+                                            <strong>Beschreibung</strong> (Optional)
                                           </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
-                                          Zusätzliche Details, um Kunden bei der
-                                          Entscheidung zu helfen
+                                          Zusätzliche Details, um Kunden bei der Entscheidung zu helfen
                                         </s-text>
-                                        <div
-                                          style={{
-                                            marginTop: "6px",
-                                            width: "95%",
-                                          }}
-                                        >
+                                        <div style={{ marginTop: "6px", width: "95%" }}>
                                           {isClient && ReactQuill && (
                                             <ReactQuill
-                                              value={
-                                                optionFormData.description || ""
-                                              }
+                                              value={optionFormData.description || ""}
                                               onChange={(value) =>
-                                                setOptionFormData({
-                                                  ...optionFormData,
-                                                  description: value,
-                                                })
+                                                setOptionFormData({ ...optionFormData, description: value })
                                               }
                                               placeholder="e.g., Perfekt für rechteckige Fenster"
                                               modules={modules}
-                                              style={{
-                                                background: "#fff",
-                                                borderRadius: "6px",
-                                              }}
+                                              style={{ background: "#fff", borderRadius: "6px" }}
                                             />
                                           )}
                                         </div>
                                       </div>
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
                                           <s-text variant="bodySm">
-                                            <strong>
-                                              💰 Zusätzliche Kosten
-                                            </strong>
+                                            <strong>💰 Zusätzliche Kosten</strong>
                                           </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
-                                          Extra Kosten für diese Auswahl (lassen
-                                          Sie 0 für keine zusätzlichen Kosten)
+                                          Extra Kosten für diese Auswahl (lassen Sie 0 für keine zusätzlichen Kosten)
                                         </s-text>
-                                        <div
-                                          style={{
-                                            position: "relative",
-                                            marginTop: "6px",
-                                          }}
-                                        >
+                                        <div style={{ position: "relative", marginTop: "6px" }}>
                                           <span
                                             style={{
                                               position: "absolute",
@@ -2339,10 +2024,7 @@ export default function ConfigureProduct() {
                                             min="0"
                                             value={optionFormData.price}
                                             onChange={(e) =>
-                                              setOptionFormData({
-                                                ...optionFormData,
-                                                price: e.target.value,
-                                              })
+                                              setOptionFormData({ ...optionFormData, price: e.target.value })
                                             }
                                             placeholder="0.00"
                                             style={{
@@ -2357,15 +2039,9 @@ export default function ConfigureProduct() {
                                       </div>
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
                                           <s-text variant="bodySm">
-                                            <strong>🖼️ Auswahlbild</strong>{" "}
-                                            (Optional)
+                                            <strong>🖼️ Auswahlbild</strong> (Optional)
                                           </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
@@ -2396,9 +2072,7 @@ export default function ConfigureProduct() {
                                             }}
                                           >
                                             <s-spinner size="small" />
-                                            <s-text variant="bodySm">
-                                              Bild wird hochgeladen...
-                                            </s-text>
+                                            <s-text variant="bodySm">Bild wird hochgeladen...</s-text>
                                           </div>
                                         )}
                                         {optionFormData.image && (
@@ -2421,10 +2095,7 @@ export default function ConfigureProduct() {
                                             />
                                             <button
                                               onClick={() =>
-                                                setOptionFormData({
-                                                  ...optionFormData,
-                                                  image: "",
-                                                })
+                                                setOptionFormData({ ...optionFormData, image: "" })
                                               }
                                               style={{
                                                 position: "absolute",
@@ -2447,42 +2118,26 @@ export default function ConfigureProduct() {
                                       </div>
 
                                       <div>
-                                        <label
-                                          style={{
-                                            display: "block",
-                                            marginBottom: "4px",
-                                          }}
-                                        >
+                                        <label style={{ display: "block", marginBottom: "4px" }}>
                                           <s-text variant="bodySm">
-                                            <strong>🔀 Bedingter Fluss</strong>{" "}
-                                            (Fortgeschritten)
+                                            <strong>🔀 Bedingter Fluss</strong> (Fortgeschritten)
                                           </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
-                                          Zeige spezifische nächste Schritte,
-                                          wenn diese Wahl ausgewählt wird
+                                          Zeige spezifische nächste Schritte, wenn diese Wahl ausgewählt wird
                                         </s-text>
                                         <s-text
                                           variant="bodySm"
                                           tone="subdued"
-                                          style={{
-                                            display: "block",
-                                            marginTop: "4px",
-                                            fontStyle: "italic",
-                                          }}
+                                          style={{ display: "block", marginTop: "4px", fontStyle: "italic" }}
                                         >
-                                          Format: ["step_key_1", "step_key_2"]
-                                          oder leer lassen, um alle Schritte zu
-                                          zeigen
+                                          Format: ["step_key_1", "step_key_2"] oder leer lassen, um alle Schritte zu zeigen
                                         </s-text>
                                         <input
                                           type="text"
                                           value={optionFormData.showSteps}
                                           onChange={(e) =>
-                                            setOptionFormData({
-                                              ...optionFormData,
-                                              showSteps: e.target.value,
-                                            })
+                                            setOptionFormData({ ...optionFormData, showSteps: e.target.value })
                                           }
                                           placeholder='e.g., ["color_selection", "measurements"]'
                                           style={{
@@ -2502,20 +2157,11 @@ export default function ConfigureProduct() {
                                       <s-stack direction="inline" gap="base">
                                         <s-button
                                           variant="primary"
-                                          onClick={() =>
-                                            handleSaveOption(step.id)
-                                          }
-                                          {...(isLoading
-                                            ? { loading: true }
-                                            : {})}
-                                          disabled={
-                                            !optionFormData.value ||
-                                            !optionFormData.label
-                                          }
+                                          onClick={() => handleSaveOption(step.id)}
+                                          {...(isLoading ? { loading: true } : {})}
+                                          disabled={!optionFormData.value || !optionFormData.label}
                                         >
-                                          {editingOption
-                                            ? "💾 Aktualisieren"
-                                            : "✓ Speichern"}
+                                          {editingOption ? "💾 Aktualisieren" : "✓ Speichern"}
                                         </s-button>
                                         <s-button
                                           variant="tertiary"
@@ -2546,49 +2192,33 @@ export default function ConfigureProduct() {
 
       {/* Help Section */}
       <s-section slot="aside">
-        <s-box
-          padding="base"
-          borderWidth="base"
-          borderRadius="base"
-          background="surface"
-        >
+        <s-box padding="base" borderWidth="base" borderRadius="base" background="surface">
           <s-stack direction="block" gap="base">
             <s-heading variant="headingSm">💡 Tipps</s-heading>
             <s-divider />
             <s-stack direction="block" gap="tight">
               <div>
-                <s-text variant="bodySm">
-                  <strong>✓ Schrittarten:</strong>
-                </s-text>
+                <s-text variant="bodySm"><strong>✓ Schrittarten:</strong></s-text>
                 <s-text variant="bodySm" tone="subdued">
-                  Verwenden Sie "Multiple Choice" für vorgegebene Optionen,
-                  "Measurements" für benutzerdefinierte Dimensionen
+                  Verwenden Sie "Multiple Choice" für vorgegebene Optionen, "Measurements" für benutzerdefinierte Dimensionen
                 </s-text>
               </div>
               <div>
-                <s-text variant="bodySm">
-                  <strong>✓ Bilder:</strong>
-                </s-text>
+                <s-text variant="bodySm"><strong>✓ Bilder:</strong></s-text>
                 <s-text variant="bodySm" tone="subdued">
-                  Fügen Sie Bilder hinzu, um Kunden bei der Visualisierung ihrer
-                  Auswahl zu helfen
+                  Fügen Sie Bilder hinzu, um Kunden bei der Visualisierung ihrer Auswahl zu helfen
                 </s-text>
               </div>
               <div>
-                <s-text variant="bodySm">
-                  <strong>✓ Pricing:</strong>
-                </s-text>
+                <s-text variant="bodySm"><strong>✓ Pricing:</strong></s-text>
                 <s-text variant="bodySm" tone="subdued">
                   Setzen Sie zusätzliche Kosten für Premium-Optionen
                 </s-text>
               </div>
               <div>
-                <s-text variant="bodySm">
-                  <strong>✓ Flow Control:</strong>
-                </s-text>
+                <s-text variant="bodySm"><strong>✓ Flow Control:</strong></s-text>
                 <s-text variant="bodySm" tone="subdued">
-                  Verwenden Sie bedingte Schritte, um dynamische
-                  Konfigurationspfade zu erstellen
+                  Verwenden Sie bedingte Schritte, um dynamische Konfigurationspfade zu erstellen
                 </s-text>
               </div>
             </s-stack>
@@ -2606,15 +2236,9 @@ export default function ConfigureProduct() {
             <s-heading variant="headingSm">📚 Tipps</s-heading>
             <s-divider />
             <s-unordered-list>
-              <s-list-item>
-                Schrittüberschriften sind klar und prägnant
-              </s-list-item>
-              <s-list-item>
-                Verwenden Sie für alle Optionen beschreibende Etiketten
-              </s-list-item>
-              <s-list-item>
-                Testen Sie den Fluss von der Perspektive des Kunden
-              </s-list-item>
+              <s-list-item>Schrittüberschriften sind klar und prägnant</s-list-item>
+              <s-list-item>Verwenden Sie für alle Optionen beschreibende Etiketten</s-list-item>
+              <s-list-item>Testen Sie den Fluss von der Perspektive des Kunden</s-list-item>
               <s-list-item>Fügen Sie Bilder hinzu, wenn möglich</s-list-item>
             </s-unordered-list>
           </s-stack>

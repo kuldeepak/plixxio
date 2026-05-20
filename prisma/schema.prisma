@@ -80,6 +80,7 @@ model ConfigurationStep {
   measurementMode String?   // "NORMAL" | "FLUGELHOHE"
   flugelMin       Int?
   flugelMax       Int?
+  flugelDependencyOptionId String? 
 
   
   // Relations

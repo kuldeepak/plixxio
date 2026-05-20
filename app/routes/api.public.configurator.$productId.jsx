@@ -80,16 +80,17 @@ export const loader = async ({ params }) => {
                 };
 
                 if (step.type === "OPTIONS" || step.type === "DROPDOWN") {
-                    stepData.options = step.options.map(option => ({
-                        value: option.value,
-                        label: option.label,
-                        description: option.description,
-                        image: option.image,
-                        price: option.price,
-                        showSteps: option.showSteps ? JSON.parse(option.showSteps) : null,
-                        order: option.order,
-                        parentOptionIds: option.parentOptionIds || null,
-                    }));
+                   stepData.options = step.options.map(option => ({
+  id: option.id,
+  value: option.value,
+  label: option.label,
+  description: option.description,
+  image: option.image,
+  price: option.price,
+  showSteps: option.showSteps ? JSON.parse(option.showSteps) : null,
+  order: option.order,
+  parentOptionIds: option.parentOptionIds || null,
+}));
                 }
 
                 if (step.type === "MEASUREMENT") {
@@ -101,9 +102,10 @@ export const loader = async ({ params }) => {
                         min: step.heightMin,
                         max: step.heightMax,
                     };
-                    stepData.measurementMode = step.measurementMode;
-    stepData.flugelMin = step.flugelMin;
-    stepData.flugelMax = step.flugelMax;
+                   stepData.measurementMode = step.measurementMode;
+stepData.flugelMin = step.flugelMin;
+stepData.flugelMax = step.flugelMax;
+stepData.flugelDependencyOptionId = step.flugelDependencyOptionId;
                 }
 
                 return stepData;
