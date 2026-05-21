@@ -379,18 +379,6 @@ function renderCascadingDropdowns(groupStepsList, container) {
   renderSingleDropdownInGroup(groupStepsList, container, 0, urlKeys);
 }
 
-
-function addDropdownKeyToActiveFlow(key) {
-  if (!key) return;
-
-  if (typeof window._getActiveFlow === "function") {
-    const flow = window._getActiveFlow();
-    if (Array.isArray(flow) && !flow.includes(key)) {
-      flow.push(key);
-    }
-  }
-}
-
 // urlKeys: Set of step keys that were loaded from the URL querystring.
 // Only pre-select and auto-cascade for those keys — not for stale state.
 function renderSingleDropdownInGroup(
@@ -488,71 +476,99 @@ function renderSingleDropdownInGroup(
   const select = wrapper.querySelector("select");
 
   select.addEventListener("change", (e) => {
-  const value = e.target.value;
-  const oldValue = state.selections[step.key];
+    const value = e.target.value;
 
-  state.selections[step.key] = value;
-  urlKeys.add(step.key);
-  addDropdownKeyToActiveFlow(step.key);
+    state.selections[step.key] = value;
+    urlKeys.add(step.key);
 
-  const toRemove = container.querySelectorAll(`.dropdown-step-row[data-dropdown-index]`);
+    refreshMeasurementSteps();
 
-  toRemove.forEach((el) => {
-    if (Number(el.dataset.dropdownIndex) > index) {
-      const removedKey = el.dataset.dropdownKey;
-      el.remove();
-      delete state.selections[removedKey];
-      urlKeys.delete(removedKey);
-    }
-  });
+    const toRemove = container.querySelectorAll(
+      `.dropdown-step-row[data-dropdown-index]`
+    );
 
-  if (value) {
-    const nextStep = groupStepsList[index + 1];
+    toRemove.forEach((el) => {
+      if (Number(el.dataset.dropdownIndex) > index) {
+        el.remove();
 
-    if (nextStep) {
-      const selectedValues = Object.values(state.selections).map(String);
-      const selectedOptionIds = getSelectedOptionIds().map(String);
-
-      const nextFilteredOptions = nextStep.options.filter((opt) => {
-        if (!opt.parentOptionIds) return true;
-
-        let parents = [];
-
-        if (Array.isArray(opt.parentOptionIds)) {
-          parents = opt.parentOptionIds;
-        } else {
-          try {
-            parents = JSON.parse(opt.parentOptionIds);
-          } catch {
-            parents = [];
-          }
-        }
-
-        parents = parents.map(String);
-
-        return (
-          parents.length === 0 ||
-          parents.some((p) =>
-            selectedValues.includes(String(p)) ||
-            selectedOptionIds.includes(String(p))
-          )
-        );
-      });
-
-      if (nextFilteredOptions.length > 0) {
-        renderSingleDropdownInGroup(groupStepsList, container, index + 1, urlKeys);
+        const removedKey = el.dataset.dropdownKey;
+        delete state.selections[removedKey];
+        urlKeys.delete(removedKey);
       }
+    });
+
+    const measurementStep = PRODUCT_CONFIG.steps.find(
+      (s) => s.type === "measurement"
+    );
+
+    if (measurementStep) {
+      state.measurements = {};
+
+      document
+        .querySelectorAll(
+          'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
+        )
+        .forEach((input) => {
+          input.value = "";
+        });
+    }
+
+    if (value) {
+
+  const nextStep = groupStepsList[index + 1];
+
+  if (nextStep) {
+
+    const selectedValues = Object.values(state.selections).map(String);
+    const selectedOptionIds = getSelectedOptionIds().map(String);
+
+    const nextFilteredOptions = nextStep.options.filter((opt) => {
+
+      if (!opt.parentOptionIds) return true;
+
+      let parents = [];
+
+      if (Array.isArray(opt.parentOptionIds)) {
+        parents = opt.parentOptionIds;
+      } else {
+        try {
+          parents = JSON.parse(opt.parentOptionIds);
+        } catch {
+          parents = [];
+        }
+      }
+
+      parents = parents.map(String);
+
+      return (
+        parents.length === 0 ||
+        parents.some((p) =>
+          selectedValues.includes(String(p)) ||
+          selectedOptionIds.includes(String(p))
+        )
+      );
+    });
+
+    console.log("Next dropdown filtered options:", nextFilteredOptions);
+
+    // ✅ Only render if options exist
+    if (nextFilteredOptions.length > 0) {
+      renderSingleDropdownInGroup(
+        groupStepsList,
+        container,
+        index + 1,
+        urlKeys
+      );
     }
   }
+}
 
-  setTimeout(() => {
-  if (window._buildSummaries) window._buildSummaries();
-  if (window._updateSummaryAlt) window._updateSummaryAlt();
-  if (window._renderFinalStep) window._renderFinalStep();
-  if (window._updatePrices) window._updatePrices();
-  if (window._updateURL) window._updateURL();
-}, 0);
-});
+    if (window._buildSummaries) window._buildSummaries();
+    if (window._updateSummaryAlt) window._updateSummaryAlt();
+    if (window._renderFinalStep) window._renderFinalStep();
+    if (window._updatePrices) window._updatePrices();
+    if (window._updateURL) window._updateURL();
+  });
 }
 
 function renderOptions(step, container) {
@@ -1361,17 +1377,17 @@ function handleDependencies(stepKey, selectedValue) {
 
       // Find the next key AFTER the group's last dropdown
       const nextKey = activeFlow[lastFlowIndex + 1];
-//       activeFlow.slice(lastFlowIndex + 1).forEach((key) => {
-//   delete state.selections[key];
+      activeFlow.slice(lastFlowIndex + 1).forEach((key) => {
+  delete state.selections[key];
 
-//   document
-//     .querySelectorAll(`input[name="${key}"]`)
-//     .forEach((input) => (input.checked = false));
+  document
+    .querySelectorAll(`input[name="${key}"]`)
+    .forEach((input) => (input.checked = false));
 
-//   document
-//     .querySelectorAll(`select[name="${key}"]`)
-//     .forEach((select) => (select.value = ""));
-// });
+  document
+    .querySelectorAll(`select[name="${key}"]`)
+    .forEach((select) => (select.value = ""));
+});
 
 const measurementStep = PRODUCT_CONFIG.steps.find(
   (s) => s.type === "measurement"

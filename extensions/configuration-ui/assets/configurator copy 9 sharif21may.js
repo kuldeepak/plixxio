@@ -379,18 +379,6 @@ function renderCascadingDropdowns(groupStepsList, container) {
   renderSingleDropdownInGroup(groupStepsList, container, 0, urlKeys);
 }
 
-
-function addDropdownKeyToActiveFlow(key) {
-  if (!key) return;
-
-  if (typeof window._getActiveFlow === "function") {
-    const flow = window._getActiveFlow();
-    if (Array.isArray(flow) && !flow.includes(key)) {
-      flow.push(key);
-    }
-  }
-}
-
 // urlKeys: Set of step keys that were loaded from the URL querystring.
 // Only pre-select and auto-cascade for those keys — not for stale state.
 function renderSingleDropdownInGroup(
@@ -402,74 +390,43 @@ function renderSingleDropdownInGroup(
   if (index >= groupStepsList.length) return;
 
   const step = groupStepsList[index];
+  const selectedValues = Object.values(state.selections);
 
-  const selectedValues = Object.values(state.selections).map(String);
-  const selectedOptionIds = getSelectedOptionIds().map(String);
-
-  console.log("========== DROPDOWN DEBUG ==========");
-  console.log("Rendering dropdown index:", index);
-  console.log("Dropdown key:", step.key);
-  console.log("Dropdown title:", step.title);
-  console.log("Current selectedValues:", selectedValues);
-  console.log("Current selectedOptionIds:", selectedOptionIds);
-  console.log("All options for this dropdown:", step.options);
-
+  // Filter options based on parent selection
   const filteredOptions = step.options.filter((opt) => {
+    if (!opt.parentOptionIds) return true;
+
     let parents = [];
-
-    if (!opt.parentOptionIds) {
-      console.log("Option allowed because no parentOptionIds:", opt.label, opt.value);
-      return true;
-    }
-
     if (Array.isArray(opt.parentOptionIds)) {
       parents = opt.parentOptionIds;
     } else {
       try {
         parents = JSON.parse(opt.parentOptionIds);
-      } catch (err) {
-        console.warn("Invalid parentOptionIds JSON:", opt.label, opt.parentOptionIds);
+      } catch {
         parents = [];
       }
     }
 
-    parents = parents.map(String);
-
-    const matched =
-      parents.length === 0 ||
-      parents.some((p) =>
-        selectedValues.includes(String(p)) ||
-        selectedOptionIds.includes(String(p))
-      );
-
-    console.log({
-      optionLabel: opt.label,
-      optionValue: opt.value,
-      parentOptionIds: parents,
-      selectedValues,
-      selectedOptionIds,
-      matched,
-    });
-
-    return matched;
+    return (
+      parents.length === 0 || parents.some((p) => selectedValues.includes(p))
+    );
   });
 
-  console.log("Filtered options for dropdown:", step.key, filteredOptions);
-  console.log("====================================");
-
+  // Build the dropdown wrapper with a label
   const wrapper = document.createElement("div");
   wrapper.classList.add("dropdown-step-row");
   wrapper.dataset.dropdownIndex = index;
   wrapper.dataset.dropdownKey = step.key;
 
+  // Only pre-select if this key was explicitly set from the URL querystring
   const savedValue = urlKeys.has(step.key) ? state.selections[step.key] : null;
 
   let html = `
-    <div class="dropdown-field">
-      <label class="dropdown-label">${step.title}</label>
-      <select name="${step.key}" data-dropdown-index="${index}">
-        <option value="">Bitte wählen</option>
-  `;
+        <div class="dropdown-field">
+            <label class="dropdown-label">${step.title}</label>
+            <select name="${step.key}" data-dropdown-index="${index}">
+                <option value="">Bitte wählen</option>
+    `;
 
   filteredOptions.forEach((opt) => {
     const isSelected = savedValue === opt.value;
@@ -481,77 +438,48 @@ function renderSingleDropdownInGroup(
   wrapper.innerHTML = html;
   container.appendChild(wrapper);
 
+  // Only cascade to next dropdown if this value came from the URL querystring
   if (savedValue) {
     renderSingleDropdownInGroup(groupStepsList, container, index + 1, urlKeys);
   }
 
+  // Listen for change on this dropdown → show next
   const select = wrapper.querySelector("select");
-
   select.addEventListener("change", (e) => {
   const value = e.target.value;
-  const oldValue = state.selections[step.key];
-
   state.selections[step.key] = value;
   urlKeys.add(step.key);
-  addDropdownKeyToActiveFlow(step.key);
+  refreshMeasurementSteps();
 
+  // ✅ ADD THIS: Reset subsequent dropdowns
   const toRemove = container.querySelectorAll(`.dropdown-step-row[data-dropdown-index]`);
-
   toRemove.forEach((el) => {
     if (Number(el.dataset.dropdownIndex) > index) {
-      const removedKey = el.dataset.dropdownKey;
       el.remove();
+      const removedKey = el.dataset.dropdownKey;
       delete state.selections[removedKey];
       urlKeys.delete(removedKey);
     }
   });
 
-  if (value) {
-    const nextStep = groupStepsList[index + 1];
-
-    if (nextStep) {
-      const selectedValues = Object.values(state.selections).map(String);
-      const selectedOptionIds = getSelectedOptionIds().map(String);
-
-      const nextFilteredOptions = nextStep.options.filter((opt) => {
-        if (!opt.parentOptionIds) return true;
-
-        let parents = [];
-
-        if (Array.isArray(opt.parentOptionIds)) {
-          parents = opt.parentOptionIds;
-        } else {
-          try {
-            parents = JSON.parse(opt.parentOptionIds);
-          } catch {
-            parents = [];
-          }
-        }
-
-        parents = parents.map(String);
-
-        return (
-          parents.length === 0 ||
-          parents.some((p) =>
-            selectedValues.includes(String(p)) ||
-            selectedOptionIds.includes(String(p))
-          )
-        );
-      });
-
-      if (nextFilteredOptions.length > 0) {
-        renderSingleDropdownInGroup(groupStepsList, container, index + 1, urlKeys);
-      }
-    }
+  // ✅ Also clear measurements if they exist
+  const measurementStep = PRODUCT_CONFIG.steps.find((s) => s.type === "measurement");
+  if (measurementStep) {
+    state.measurements = {};
+    document.querySelectorAll('input[name="breite"], input[name="hoehe"], input[name="flugel"]')
+      .forEach((input) => input.value = "");
   }
 
-  setTimeout(() => {
+  // Render next dropdown if value selected
+  if (value) {
+    renderSingleDropdownInGroup(groupStepsList, container, index + 1, urlKeys);
+  }
+
   if (window._buildSummaries) window._buildSummaries();
   if (window._updateSummaryAlt) window._updateSummaryAlt();
   if (window._renderFinalStep) window._renderFinalStep();
   if (window._updatePrices) window._updatePrices();
   if (window._updateURL) window._updateURL();
-}, 0);
 });
 }
 
@@ -1361,17 +1289,17 @@ function handleDependencies(stepKey, selectedValue) {
 
       // Find the next key AFTER the group's last dropdown
       const nextKey = activeFlow[lastFlowIndex + 1];
-//       activeFlow.slice(lastFlowIndex + 1).forEach((key) => {
-//   delete state.selections[key];
+      activeFlow.slice(lastFlowIndex + 1).forEach((key) => {
+  delete state.selections[key];
 
-//   document
-//     .querySelectorAll(`input[name="${key}"]`)
-//     .forEach((input) => (input.checked = false));
+  document
+    .querySelectorAll(`input[name="${key}"]`)
+    .forEach((input) => (input.checked = false));
 
-//   document
-//     .querySelectorAll(`select[name="${key}"]`)
-//     .forEach((select) => (select.value = ""));
-// });
+  document
+    .querySelectorAll(`select[name="${key}"]`)
+    .forEach((select) => (select.value = ""));
+});
 
 const measurementStep = PRODUCT_CONFIG.steps.find(
   (s) => s.type === "measurement"
