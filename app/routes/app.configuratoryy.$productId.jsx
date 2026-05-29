@@ -1942,7 +1942,7 @@ export default function ConfigureProduct() {
                                         />
                                       </div>
 
-                                      {step.type === "DROPDOWN" && (
+                                      {step.type === "DROPDOWN" && product.steps.filter((s) => s.type === "DROPDOWN" && s.order < step.order).length > 0  && (
                                         <div>
                                           <label>
                                             <s-text variant="bodySm">
