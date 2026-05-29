@@ -2116,12 +2116,12 @@ export default function ConfigureProduct() {
                                           </div>
                                         )}
                                       </div>
-
-                                      <div>
-                                        <label style={{ display: "block", marginBottom: "4px" }}>
-                                          <s-text variant="bodySm">
-                                            <strong>🔀 Bedingter Fluss</strong> (Fortgeschritten)
-                                          </s-text>
+                                      {index === 0 && (
+                                        <div>
+                                          <label style={{ display: "block", marginBottom: "4px" }}>
+                                            <s-text variant="bodySm">
+                                              <strong>🔀 Bedingter Fluss</strong> (Fortgeschritten)
+                                            </s-text>
                                         </label>
                                         <s-text variant="bodySm" tone="subdued">
                                           Zeige spezifische nächste Schritte, wenn diese Wahl ausgewählt wird
@@ -2151,7 +2151,7 @@ export default function ConfigureProduct() {
                                           }}
                                         />
                                       </div>
-
+                                      )}
                                       <s-divider />
 
                                       <s-stack direction="inline" gap="base">

@@ -2030,7 +2030,7 @@ function buildSummaries(config) {
               quantity: state.menge,
               properties: {
                 ...buildShopifyLineItemProperties(),
-                ...(colorFromURL ? { Farbe: colorFromURL } : {}),
+                ...(colorFromURL ? { color: colorFromURL } : {}),
                 _url: fullURL,
               },
             },
