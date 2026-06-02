@@ -175,7 +175,7 @@ function setupPopStateHandler() {
 async function loadConfiguration(productId) {
   try {
     const response = await fetch(
-      `https://print-satisfactory-government-powerful.trycloudflare.com/api/public/configurator/${productId}?v=${Date.now()}`,
+      `https://ranks-easter-because-decimal.trycloudflare.com/api/public/configurator/${productId}?v=${Date.now()}`,
       { cache: "no-store",credentials: "same-origin" },
     );
     const data = await response.json();
@@ -492,12 +492,6 @@ function renderSingleDropdownInGroup(
   const oldValue = state.selections[step.key];
 
   state.selections[step.key] = value;
-   // ✅ ADD HERE
-  if (window._handleDependencies && value) {
-    window._handleDependencies(step.key, value);
-  }
-
-
   urlKeys.add(step.key);
   addDropdownKeyToActiveFlow(step.key);
 
@@ -764,13 +758,9 @@ function renderMeasurementStepContent(step, content) {
   const oldFlugel = state.measurements?.flugel || "";
 const showFlugel = shouldShowFlugelForStep(step);
 
-  if (!showFlugel) {
-  const flugelInputExists = document.querySelector('input[name="flugel"]');
-
-  if (!flugelInputExists) {
+  if (!showFlugel && state.measurements?.flugel) {
     delete state.measurements.flugel;
   }
-}
 
   let html = `
               <div class="measure-field">
@@ -1318,68 +1308,30 @@ function addToFlow(key) {
 function buildFlow(currentStepKey) {
   addToFlow(currentStepKey);
 
-  const step = PRODUCT_CONFIG.steps.find(
-    (s) => s.key === currentStepKey
-  );
-
+  const step = PRODUCT_CONFIG.steps.find((s) => s.key === currentStepKey);
   if (!step) return;
 
-  // ✅ measurement has showSteps directly, no selectedValue needed
-  if (step.type === "measurement" && step.showSteps) {
+  // ── MEASUREMENT: next steps live on the step itself, not on an option ──
+  if (step.type === "measurement") {
     const nextSteps = normalizeShowSteps(step.showSteps);
-
     nextSteps.forEach((nextKey) => {
       addToFlow(nextKey);
-
-      if (state.selections[nextKey]) {
-        buildFlow(nextKey);
-      }
+      // recurse so anything after the post-measurement step also gets added
+      buildFlow(nextKey);
     });
-
-    return;
+    return; // measurements have no options to check
   }
 
+  // ── OPTIONS / DROPDOWN: next steps live on the selected option ──
   const selectedValue = state.selections[currentStepKey];
-
   if (!selectedValue) return;
 
-  const selectedOption = step.options?.find(
-    (o) => o.value === selectedValue
-  );
-
+  const selectedOption = step.options?.find((o) => o.value === selectedValue);
   if (!selectedOption) return;
 
   const nextSteps = normalizeShowSteps(selectedOption.showSteps);
-
   nextSteps.forEach((nextKey) => {
     addToFlow(nextKey);
-
-    const nextStepObj = PRODUCT_CONFIG.steps.find(
-      (s) => s.key === nextKey
-    );
-
-    // ✅ measurement has no selection, still continue flow
-    if (nextStepObj?.type === "measurement") {
-      buildFlow(nextKey);
-      return;
-    }
-
-     // ✅ FIX: dropdown group chain should continue even if option has no showSteps
-  if (nextStepObj?.type === "dropdown") {
-    if (state.selections[nextKey]) {
-      buildFlow(nextKey);
-    }
-
-    // keep all selected dropdown children in flow
-    PRODUCT_CONFIG.steps.forEach((s) => {
-      if (s.type === "dropdown" && state.selections[s.key]) {
-        addToFlow(s.key);
-      }
-    });
-
-    return;
-  }
-
     if (state.selections[nextKey]) {
       buildFlow(nextKey);
     }
@@ -1390,48 +1342,10 @@ const firstStepKeyForFlow =
   PRODUCT_CONFIG.steps[0]?.key;
 
 buildFlow(firstStepKeyForFlow);
-// ✅ keep all selected dropdowns in summary/final flow
-// PRODUCT_CONFIG.steps.forEach((s) => {
-//   if (s.type === "dropdown" && state.selections[s.key]) {
-//     addToFlow(s.key);
-//   }
-// });
 
 activeFlow = newFlow;
 
-Object.keys(state.selections).forEach((key) => {
-  if (!activeFlow.includes(key)) {
-    delete state.selections[key];
-
-    document
-      .querySelectorAll(`input[name="${key}"], select[name="${key}"]`)
-      .forEach((el) => {
-        if (el.type === "radio" || el.type === "checkbox") {
-          el.checked = false;
-        } else {
-          el.value = "";
-        }
-      });
-  }
-});
-
-console.log("===== AFTER HANDLE REBUILD =====");
-console.log("clicked stepKey:", stepKey);
-console.log("newFlow:", [...newFlow]);
-console.log("activeFlow:", [...activeFlow]);
-console.log("currentFlowIndex:", activeFlow.indexOf(stepKey));
-
   const currentFlowIndex = activeFlow.indexOf(stepKey);
-
-  if (currentFlowIndex === -1) {
-  activeFlow.forEach((key) => showStepByKey(key));
-  buildSummaries(PRODUCT_CONFIG);
-  updateSummaryAlt();
-  renderFinalStep();
-  updatePrices();
-  updateURL();
-  return;
-}
 
   // =====================================================
   // ✅ DISABLE ALL
@@ -1468,7 +1382,6 @@ console.log("currentFlowIndex:", activeFlow.indexOf(stepKey));
 
   updateURL();
 }
-window._handleDependencies = handleDependencies;
 
 
 
@@ -1494,14 +1407,9 @@ window._handleDependencies = handleDependencies;
       const currentStepEl = e.target.closest(".config-step");
       const currentKey = currentStepEl.dataset.stepKey;
       const isDropdownGroup = currentStepEl.dataset.dropdownGroup === "true";
-            console.log("===== WEITER CLICK =====");
-console.log("currentKey:", currentKey);
-console.log("activeFlow BEFORE:", [...activeFlow]);
-console.log("state.selections:", JSON.parse(JSON.stringify(state.selections)));
-console.log(
-  "visible steps:",
-  [...document.querySelectorAll(".config-step:not(.is-disabled)")].map(el => el.dataset.stepKey)
-);
+            // Add these at the very top of the step-next click handler, before any other logic
+console.log("WEITER clicked, currentKey:", currentKey);
+console.log("PRODUCT_CONFIG step found:", PRODUCT_CONFIG.steps.find(s => s.key === currentKey));
 
       // Validate the current step
       if (isDropdownGroup) {
@@ -1594,11 +1502,6 @@ if (!isDropdownGroup) {
   );
 
   if (measureStep?.showSteps) {
-    console.log("===== MEASUREMENT SHOWSTEPS =====");
-console.log("measureStep key:", measureStep.key);
-console.log("measureStep.showSteps raw:", measureStep.showSteps);
-console.log("activeFlow BEFORE injection:", [...activeFlow]);
-
     let nextSteps = [];
     try {
       nextSteps = Array.isArray(measureStep.showSteps)
@@ -1621,8 +1524,6 @@ console.log("activeFlow BEFORE injection:", [...activeFlow]);
         if (!activeFlow.includes(k)) activeFlow.push(k);
       });
     }
-    console.log("nextSteps:", nextSteps);
-console.log("activeFlow AFTER injection:", [...activeFlow]);
   }
 }
 
@@ -2066,18 +1967,7 @@ function buildSummaries(config) {
   sideList.innerHTML = "";
 
   config.steps.forEach((step) => {
-    // if (activeFlow.length && !activeFlow.includes(step.key)) return;
-//     if (
-//   activeFlow.length &&
-//   !activeFlow.includes(step.key) &&
-//   !state.selections[step.key]
-// ) {
-//   return;
-// }
-
-if (activeFlow.length && !activeFlow.includes(step.key)) {
-  return;
-}
+    if (activeFlow.length && !activeFlow.includes(step.key)) return;
 
     // ✅ FULL CLEAN (HTML + encoded HTML remove)
     const cleanTitle = stripHTML(decodeHTML(step.title || ""));

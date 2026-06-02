@@ -621,11 +621,39 @@ setTimeout(() => {
 
   // Hide all previously-shown downstream steps and strip them from
   // state so stale data does not linger.
+  // oldNextSteps.forEach((key) => {
+  //   const el = document.querySelector(`.config-step[data-step-key="${key}"]`);
+  //   if (el) el.classList.add("is-disabled");
+  //   // delete (window._stateRef?.selections ?? {})[key];
+  //   delete state.selections[key];
+  // });
   oldNextSteps.forEach((key) => {
-    const el = document.querySelector(`.config-step[data-step-key="${key}"]`);
-    if (el) el.classList.add("is-disabled");
-    delete (window._stateRef?.selections ?? {})[key];
+  const stepObj = PRODUCT_CONFIG.steps.find((s) => s.key === key);
+
+  const el = document.querySelector(`.config-step[data-step-key="${key}"]`);
+  if (el) el.classList.add("is-disabled");
+
+  delete state.selections[key];
+
+  document.querySelectorAll(`input[name="${key}"]`).forEach((input) => {
+    input.checked = false;
   });
+
+  document.querySelectorAll(`select[name="${key}"]`).forEach((select) => {
+    select.value = "";
+  });
+
+  if (stepObj?.type === "measurement") {
+    state.measurements = {};
+
+    document
+      .querySelectorAll('input[name="breite"], input[name="hoehe"], input[name="flugel"]')
+      .forEach((input) => {
+        input.value = "";
+        input.classList.remove("error");
+      });
+  }
+});
   const finalStepEl = document.getElementById("finalStep");
   if (finalStepEl) finalStepEl.classList.add("is-disabled");
 
@@ -764,13 +792,9 @@ function renderMeasurementStepContent(step, content) {
   const oldFlugel = state.measurements?.flugel || "";
 const showFlugel = shouldShowFlugelForStep(step);
 
-  if (!showFlugel) {
-  const flugelInputExists = document.querySelector('input[name="flugel"]');
-
-  if (!flugelInputExists) {
+  if (!showFlugel && state.measurements?.flugel) {
     delete state.measurements.flugel;
   }
-}
 
   let html = `
               <div class="measure-field">
@@ -1391,29 +1415,13 @@ const firstStepKeyForFlow =
 
 buildFlow(firstStepKeyForFlow);
 // ✅ keep all selected dropdowns in summary/final flow
-// PRODUCT_CONFIG.steps.forEach((s) => {
-//   if (s.type === "dropdown" && state.selections[s.key]) {
-//     addToFlow(s.key);
-//   }
-// });
-
-activeFlow = newFlow;
-
-Object.keys(state.selections).forEach((key) => {
-  if (!activeFlow.includes(key)) {
-    delete state.selections[key];
-
-    document
-      .querySelectorAll(`input[name="${key}"], select[name="${key}"]`)
-      .forEach((el) => {
-        if (el.type === "radio" || el.type === "checkbox") {
-          el.checked = false;
-        } else {
-          el.value = "";
-        }
-      });
+PRODUCT_CONFIG.steps.forEach((s) => {
+  if (s.type === "dropdown" && state.selections[s.key]) {
+    addToFlow(s.key);
   }
 });
+
+activeFlow = newFlow;
 
 console.log("===== AFTER HANDLE REBUILD =====");
 console.log("clicked stepKey:", stepKey);
@@ -1651,30 +1659,30 @@ console.log("activeFlow AFTER injection:", [...activeFlow]);
 //     .forEach((select) => (select.value = ""));
 // });
 
-const measurementStep = PRODUCT_CONFIG.steps.find(
-  (s) => s.type === "measurement"
-);
+// const measurementStep = PRODUCT_CONFIG.steps.find(
+//   (s) => s.type === "measurement"
+// );
 
-if (
-  measurementStep &&
-  activeFlow.indexOf(measurementStep.key) > lastFlowIndex
-) {
-  state.measurements = {};
+// if (
+//   measurementStep &&
+//   activeFlow.indexOf(measurementStep.key) > lastFlowIndex
+// ) {
+//   state.measurements = {};
 
-  document
-    .querySelectorAll(
-      'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
-    )
-    .forEach((input) => {
-      input.value = "";
-      input.classList.remove("error");
-    });
+//   document
+//     .querySelectorAll(
+//       'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
+//     )
+//     .forEach((input) => {
+//       input.value = "";
+//       input.classList.remove("error");
+//     });
 
-  document.querySelectorAll(".measure-error").forEach((el) => {
-    el.style.display = "none";
-    el.textContent = "";
-  });
-}
+//   document.querySelectorAll(".measure-error").forEach((el) => {
+//     el.style.display = "none";
+//     el.textContent = "";
+//   });
+// }
       showStepByKey(nextKey);
 
       // The next step element — look up by real key first, then fallback to group
@@ -2067,15 +2075,11 @@ function buildSummaries(config) {
 
   config.steps.forEach((step) => {
     // if (activeFlow.length && !activeFlow.includes(step.key)) return;
-//     if (
-//   activeFlow.length &&
-//   !activeFlow.includes(step.key) &&
-//   !state.selections[step.key]
-// ) {
-//   return;
-// }
-
-if (activeFlow.length && !activeFlow.includes(step.key)) {
+    if (
+  activeFlow.length &&
+  !activeFlow.includes(step.key) &&
+  !state.selections[step.key]
+) {
   return;
 }
 

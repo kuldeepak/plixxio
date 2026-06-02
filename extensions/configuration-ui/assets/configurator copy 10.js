@@ -492,12 +492,6 @@ function renderSingleDropdownInGroup(
   const oldValue = state.selections[step.key];
 
   state.selections[step.key] = value;
-   // ✅ ADD HERE
-  if (window._handleDependencies && value) {
-    window._handleDependencies(step.key, value);
-  }
-
-
   urlKeys.add(step.key);
   addDropdownKeyToActiveFlow(step.key);
 
@@ -764,13 +758,9 @@ function renderMeasurementStepContent(step, content) {
   const oldFlugel = state.measurements?.flugel || "";
 const showFlugel = shouldShowFlugelForStep(step);
 
-  if (!showFlugel) {
-  const flugelInputExists = document.querySelector('input[name="flugel"]');
-
-  if (!flugelInputExists) {
+  if (!showFlugel && state.measurements?.flugel) {
     delete state.measurements.flugel;
   }
-}
 
   let html = `
               <div class="measure-field">
@@ -1364,22 +1354,6 @@ function buildFlow(currentStepKey) {
       return;
     }
 
-     // ✅ FIX: dropdown group chain should continue even if option has no showSteps
-  if (nextStepObj?.type === "dropdown") {
-    if (state.selections[nextKey]) {
-      buildFlow(nextKey);
-    }
-
-    // keep all selected dropdown children in flow
-    PRODUCT_CONFIG.steps.forEach((s) => {
-      if (s.type === "dropdown" && state.selections[s.key]) {
-        addToFlow(s.key);
-      }
-    });
-
-    return;
-  }
-
     if (state.selections[nextKey]) {
       buildFlow(nextKey);
     }
@@ -1390,30 +1364,8 @@ const firstStepKeyForFlow =
   PRODUCT_CONFIG.steps[0]?.key;
 
 buildFlow(firstStepKeyForFlow);
-// ✅ keep all selected dropdowns in summary/final flow
-// PRODUCT_CONFIG.steps.forEach((s) => {
-//   if (s.type === "dropdown" && state.selections[s.key]) {
-//     addToFlow(s.key);
-//   }
-// });
 
 activeFlow = newFlow;
-
-Object.keys(state.selections).forEach((key) => {
-  if (!activeFlow.includes(key)) {
-    delete state.selections[key];
-
-    document
-      .querySelectorAll(`input[name="${key}"], select[name="${key}"]`)
-      .forEach((el) => {
-        if (el.type === "radio" || el.type === "checkbox") {
-          el.checked = false;
-        } else {
-          el.value = "";
-        }
-      });
-  }
-});
 
 console.log("===== AFTER HANDLE REBUILD =====");
 console.log("clicked stepKey:", stepKey);
@@ -1422,16 +1374,6 @@ console.log("activeFlow:", [...activeFlow]);
 console.log("currentFlowIndex:", activeFlow.indexOf(stepKey));
 
   const currentFlowIndex = activeFlow.indexOf(stepKey);
-
-  if (currentFlowIndex === -1) {
-  activeFlow.forEach((key) => showStepByKey(key));
-  buildSummaries(PRODUCT_CONFIG);
-  updateSummaryAlt();
-  renderFinalStep();
-  updatePrices();
-  updateURL();
-  return;
-}
 
   // =====================================================
   // ✅ DISABLE ALL
@@ -1468,7 +1410,6 @@ console.log("currentFlowIndex:", activeFlow.indexOf(stepKey));
 
   updateURL();
 }
-window._handleDependencies = handleDependencies;
 
 
 
@@ -2066,18 +2007,7 @@ function buildSummaries(config) {
   sideList.innerHTML = "";
 
   config.steps.forEach((step) => {
-    // if (activeFlow.length && !activeFlow.includes(step.key)) return;
-//     if (
-//   activeFlow.length &&
-//   !activeFlow.includes(step.key) &&
-//   !state.selections[step.key]
-// ) {
-//   return;
-// }
-
-if (activeFlow.length && !activeFlow.includes(step.key)) {
-  return;
-}
+    if (activeFlow.length && !activeFlow.includes(step.key)) return;
 
     // ✅ FULL CLEAN (HTML + encoded HTML remove)
     const cleanTitle = stripHTML(decodeHTML(step.title || ""));
