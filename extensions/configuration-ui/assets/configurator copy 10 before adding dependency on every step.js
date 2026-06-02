@@ -175,7 +175,7 @@ function setupPopStateHandler() {
 async function loadConfiguration(productId) {
   try {
     const response = await fetch(
-      `https://ranks-easter-because-decimal.trycloudflare.com/api/public/configurator/${productId}?v=${Date.now()}`,
+      `https://plixxo.droplify.de/api/public/configurator/${productId}?v=${Date.now()}`,
       { cache: "no-store",credentials: "same-origin" },
     );
     const data = await response.json();
@@ -545,97 +545,13 @@ function renderSingleDropdownInGroup(
     }
   }
 
-//   setTimeout(() => {
-//   if (window._buildSummaries) window._buildSummaries();
-//   if (window._updateSummaryAlt) window._updateSummaryAlt();
-//   if (window._renderFinalStep) window._renderFinalStep();
-//   if (window._updatePrices) window._updatePrices();
-//   if (window._updateURL) window._updateURL();
-// }, 0);
-
-// WITH this:
-setTimeout(() => {
+  setTimeout(() => {
   if (window._buildSummaries) window._buildSummaries();
   if (window._updateSummaryAlt) window._updateSummaryAlt();
   if (window._renderFinalStep) window._renderFinalStep();
   if (window._updatePrices) window._updatePrices();
   if (window._updateURL) window._updateURL();
-
-  // ── Re-evaluate downstream steps after dropdown change ──────────────────
-  // Only runs when WEITER has already been clicked (activeFlow has entries).
-  const flow = typeof window._getActiveFlow === "function"
-    ? window._getActiveFlow()
-    : [];
-
-  if (!flow.length) return;
-
-  // Find all dropdown keys that belong to this group so we can locate
-  // the group's "slot" in activeFlow (we use the last dropdown key in
-  // the group as the anchor, matching the WEITER logic).
-  const groupEl = container.closest('[data-dropdown-group="true"]');
-  if (!groupEl) return;
-
-  const allGroupSelects = groupEl.querySelectorAll("select");
-  let lastGroupFlowIndex = -1;
-  allGroupSelects.forEach((sel) => {
-    const idx = flow.indexOf(sel.name);
-    if (idx > lastGroupFlowIndex) lastGroupFlowIndex = idx;
-  });
-
-  if (lastGroupFlowIndex === -1) return; // WEITER not yet clicked
-
-  // Determine what the last visible dropdown's selected option says to show.
-  const lastSelect = allGroupSelects[allGroupSelects.length - 1];
-  const lastDropdownStep = window.PRODUCT_CONFIG?.steps?.find(
-    (s) => s.key === lastSelect?.name
-  );
-  const lastSelectedOption = lastDropdownStep?.options?.find(
-    (o) => o.value === lastSelect?.value
-  );
-
-  let newNextSteps = [];
-  if (lastSelectedOption?.showSteps) {
-    try {
-      newNextSteps = Array.isArray(lastSelectedOption.showSteps)
-        ? lastSelectedOption.showSteps
-        : JSON.parse(lastSelectedOption.showSteps);
-    } catch {
-      newNextSteps = [];
-    }
-  }
-
-  // Steps that were shown after the group (from the previous selection).
-  const oldNextSteps = flow.slice(lastGroupFlowIndex + 1);
-
-  // Nothing changed — avoid unnecessary DOM work.
-  if (
-    newNextSteps.length === oldNextSteps.length &&
-    newNextSteps.every((k, i) => k === oldNextSteps[i])
-  ) return;
-
-  // Hide all previously-shown downstream steps and strip them from
-  // state so stale data does not linger.
-  oldNextSteps.forEach((key) => {
-    const el = document.querySelector(`.config-step[data-step-key="${key}"]`);
-    if (el) el.classList.add("is-disabled");
-    delete (window._stateRef?.selections ?? {})[key];
-  });
-  const finalStepEl = document.getElementById("finalStep");
-  if (finalStepEl) finalStepEl.classList.add("is-disabled");
-
-  // Rebuild the tail of activeFlow with the new steps.
-  flow.splice(lastGroupFlowIndex + 1, Infinity, ...newNextSteps);
-
-  // Show the new next steps (they will still require WEITER to proceed,
-  
-
-  // Rebuild summaries so table rows match the new flow.
-  if (window._buildSummaries) window._buildSummaries();
-  if (window._updateSummaryAlt) window._updateSummaryAlt();
-  if (window._renderFinalStep) window._renderFinalStep();
 }, 0);
-
-
 });
 }
 
@@ -1027,7 +943,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   // LOAD CONFIGURATION FROM API
   // ============================================
   PRODUCT_CONFIG = await loadConfiguration(PRODUCT_ID);
-  window.PRODUCT_CONFIG = PRODUCT_CONFIG;
 
   if (!PRODUCT_CONFIG) return;
 
@@ -1153,8 +1068,6 @@ function handleDependencies(stepKey, selectedValue, oldValue = state.selections[
   if (!step || !step.options) return;
 
   const option = step.options.find((o) => o.value === selectedValue);
-  console.log("SELECTED OPTION", option);
-console.log("SHOW STEPS", option?.showSteps);
   if (!option) return;
 
   const firstStepKey = PRODUCT_CONFIG.steps[0]?.key;
@@ -1262,55 +1175,72 @@ console.log("SHOW STEPS", option?.showSteps);
   // =====================================================
   // ✅ BUILD FLOW
   // =====================================================
- const newFlow = [];
+  const newFlow = [];
 
-function addToFlow(key) {
-  if (key && !newFlow.includes(key)) {
-    newFlow.push(key);
-  }
-}
-
-function buildFlow(currentStepKey) {
-
-  addToFlow(currentStepKey);
-
-  const selectedValue = state.selections[currentStepKey];
-
-  if (!selectedValue) return;
-
-  const step = PRODUCT_CONFIG.steps.find(
-    (s) => s.key === currentStepKey
-  );
-
-  if (!step) return;
-
-  const selectedOption = step.options?.find(
-    (o) => o.value === selectedValue
-  );
-
-  if (!selectedOption) return;
-
-  const nextSteps = normalizeShowSteps(
-    selectedOption.showSteps
-  );
-
-  nextSteps.forEach((nextKey) => {
-
-    addToFlow(nextKey);
-
-    if (state.selections[nextKey]) {
-      buildFlow(nextKey);
+  function addToFlow(key) {
+    if (key && !newFlow.includes(key)) {
+      newFlow.push(key);
     }
+  }
 
+  if (isFirstStepChanged) {
+ addToFlow(firstStepKey);
+  // reset all previous selections
+  Object.keys(state.selections).forEach((key) => {
+
+    if (key !== firstStepKey) {
+
+      delete state.selections[key];
+
+      document
+        .querySelectorAll(`input[name="${key}"]`)
+        .forEach((r) => {
+          r.checked = false;
+        });
+
+      document
+        .querySelectorAll(`select[name="${key}"]`)
+        .forEach((s) => {
+          s.value = "";
+        });
+    }
   });
-}
 
-const firstStepKeyForFlow =
-  PRODUCT_CONFIG.steps[0]?.key;
+  // keep clicked first option
+  state.selections[firstStepKey] = selectedValue;
 
-buildFlow(firstStepKeyForFlow);
+  // clear measurements
+  state.measurements = {};
 
-activeFlow = newFlow;
+  // clear qty
+  state.menge = 1;
+
+  // clear measurement UI
+  document
+    .querySelectorAll(
+      'input[name="breite"], input[name="hoehe"], input[name="flugel"]'
+    )
+    .forEach((input) => {
+      input.value = "";
+    });
+
+  // rebuild flow
+  activeFlow = [firstStepKey];
+
+  // reset URL immediately
+  updateURL();
+} else {
+
+    activeFlow.forEach(addToFlow);
+
+    Object.keys(state.selections).forEach(addToFlow);
+
+    addToFlow(stepKey);
+  }
+
+  normalizeShowSteps(option.showSteps).forEach(addToFlow);
+
+  activeFlow = newFlow;
 
   const currentFlowIndex = activeFlow.indexOf(stepKey);
 
@@ -1374,9 +1304,6 @@ activeFlow = newFlow;
       const currentStepEl = e.target.closest(".config-step");
       const currentKey = currentStepEl.dataset.stepKey;
       const isDropdownGroup = currentStepEl.dataset.dropdownGroup === "true";
-            // Add these at the very top of the step-next click handler, before any other logic
-console.log("WEITER clicked, currentKey:", currentKey);
-console.log("PRODUCT_CONFIG step found:", PRODUCT_CONFIG.steps.find(s => s.key === currentKey));
 
       // Validate the current step
       if (isDropdownGroup) {
@@ -1399,47 +1326,6 @@ console.log("PRODUCT_CONFIG step found:", PRODUCT_CONFIG.steps.find(s => s.key =
         }
       }
 
-      if (isDropdownGroup) {
-
-  const visibleSelects =
-    currentStepEl.querySelectorAll("select");
-
-  const lastSelect =
-    visibleSelects[visibleSelects.length - 1];
-
-  if (lastSelect && lastSelect.value) {
-
-    const dropdownStep =
-      PRODUCT_CONFIG.steps.find(
-        (s) => s.key === lastSelect.name
-      );
-
-    const selectedOption =
-      dropdownStep?.options?.find(
-        (o) => o.value === lastSelect.value
-      );
-
-    if (selectedOption?.showSteps) {
-
-      let nextSteps = [];
-
-      try {
-        nextSteps = Array.isArray(selectedOption.showSteps)
-          ? selectedOption.showSteps
-          : JSON.parse(selectedOption.showSteps);
-      } catch (e) {
-        nextSteps = [];
-      }
-
-      nextSteps.forEach((stepKey) => {
-        if (!activeFlow.includes(stepKey)) {
-          activeFlow.push(stepKey);
-        }
-      });
-    }
-  }
-}
-
       // Determine active flow position for this step.
       // For dropdown groups, all dropdown keys live in activeFlow.
       // We want the LAST dropdown key in the group to find what comes after.
@@ -1461,38 +1347,6 @@ console.log("PRODUCT_CONFIG step found:", PRODUCT_CONFIG.steps.find(s => s.key =
       } else {
         lastFlowIndex = activeFlow.indexOf(currentKey);
       }
-
-      // ── MEASUREMENT: inject showSteps into activeFlow ──────────────
-if (!isDropdownGroup) {
-  const measureStep = PRODUCT_CONFIG.steps.find(
-    (s) => s.key === currentKey && s.type === "measurement"
-  );
-
-  if (measureStep?.showSteps) {
-    let nextSteps = [];
-    try {
-      nextSteps = Array.isArray(measureStep.showSteps)
-        ? measureStep.showSteps
-        : JSON.parse(measureStep.showSteps);
-    } catch (e) {
-      nextSteps = [];
-    }
-
-    // Find where this measurement step sits in activeFlow
-    const measFlowIdx = activeFlow.indexOf(currentKey);
-
-    // Replace everything after it with the declared next steps
-    if (measFlowIdx !== -1) {
-      activeFlow.splice(measFlowIdx + 1, Infinity, ...nextSteps);
-    } else {
-      // Not yet in flow (first time clicking WEITER) — append
-      activeFlow.push(currentKey);
-      nextSteps.forEach((k) => {
-        if (!activeFlow.includes(k)) activeFlow.push(k);
-      });
-    }
-  }
-}
 
       if (lastFlowIndex === -1 || lastFlowIndex === activeFlow.length - 1) {
         // No more steps → show final step
@@ -1594,6 +1448,11 @@ if (
     reRenderDependentSteps(input.name);
   }
 }
+
+    if (input.type === "radio") {
+      handleDependencies(input.name, input.value);
+      refreshMeasurementSteps();
+    }
 
     updateSummaryAlt();
     renderFinalStep();
@@ -2017,25 +1876,6 @@ function buildSummaries(config) {
       }
 
       applyStateToUI(state);
-
-      // Patch activeFlow for any measurement steps that declare showSteps
-(PRODUCT_CONFIG?.steps || []).forEach((step) => {
-  if (step.type !== "measurement") return;
-  if (!activeFlow.includes(step.key)) return;
-  if (!step.showSteps) return;
-
-  let nextSteps = [];
-  try {
-    nextSteps = Array.isArray(step.showSteps)
-      ? step.showSteps
-      : JSON.parse(step.showSteps);
-  } catch (e) {
-    nextSteps = [];
-  }
-
-  const measIdx = activeFlow.indexOf(step.key);
-  activeFlow.splice(measIdx + 1, Infinity, ...nextSteps);
-});
 
       // Re-trigger cascading dropdowns with saved state
       const groupContainers = document.querySelectorAll(

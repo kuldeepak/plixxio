@@ -98,7 +98,6 @@ export const action = async ({ request, params }) => {
       const subtitle = formData.get("subtitle") || "";
       const description = formData.get("description") || "";
       const image = formData.get("image") || "";
-      const showSteps = getNullable(formData.get("showSteps"));
 
       const maxOrderStep = await prisma.configurationStep.findFirst({
         where: { productId },
@@ -150,7 +149,6 @@ export const action = async ({ request, params }) => {
           flugelMin,
           flugelMax,
           flugelDependencyOptionId,
-          showSteps,
         },
       });
 
@@ -194,7 +192,6 @@ export const action = async ({ request, params }) => {
 
       // NEW: flugelDependencyOptionId
       const flugelDependencyOptionId = getNullable(formData.get("flugelDependencyOptionId"));
-      const showSteps = getNullable(formData.get("showSteps"));
 
       const step = await prisma.configurationStep.update({
         where: { id: stepId },
@@ -213,7 +210,6 @@ export const action = async ({ request, params }) => {
           flugelMin,
           flugelMax,
           flugelDependencyOptionId,
-          showSteps,
         },
       });
 
@@ -395,7 +391,6 @@ export default function ConfigureProduct() {
     flugelMin: "",
     flugelMax: "",
     flugelDependencyOptionId: "",
-    showSteps: "",
   });
 
   const handleQuillChange = (field, value) => {
@@ -453,7 +448,6 @@ export default function ConfigureProduct() {
       flugelMin: "",
       flugelMax: "",
       flugelDependencyOptionId: "",
-      showSteps: "",
     });
     setOptionFormData({
       value: "",
@@ -541,7 +535,6 @@ export default function ConfigureProduct() {
       flugelMin: step.flugelMin?.toString() || "",
       flugelMax: step.flugelMax?.toString() || "",
       flugelDependencyOptionId: step.flugelDependencyOptionId || "",
-      showSteps: step.showSteps || "",
     });
     setShowStepForm(true);
 
@@ -608,7 +601,6 @@ export default function ConfigureProduct() {
       submitData.append("flugelMin", stepFormData.flugelMin);
       submitData.append("flugelMax", stepFormData.flugelMax);
       submitData.append("flugelDependencyOptionId", stepFormData.flugelDependencyOptionId || "");
-      submitData.append("showSteps",stepFormData.showSteps || "");
     }
 
     fetcher.submit(submitData, { method: "POST" });
@@ -1347,26 +1339,6 @@ export default function ConfigureProduct() {
                           </div>
                         </>
                       )}
-
-                      <div style={{ marginTop: "20px" }}>
-  <label>
-    <strong>🔀 Next Steps</strong>
-  </label>
-
-  <input
-    type="text"
-    value={stepFormData.showSteps || ""}
-    onChange={(e) =>
-      setStepFormData({
-        ...stepFormData,
-        showSteps: e.target.value,
-      })
-    }
-    placeholder='["glass","color","summary"]'
-    style={inputStyle}
-  />
-</div>
-
                     </div>
                   )}
 

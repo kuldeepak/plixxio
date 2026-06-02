@@ -81,6 +81,7 @@ model ConfigurationStep {
   flugelMin       Int?
   flugelMax       Int?
   flugelDependencyOptionId String? 
+  showSteps String?
 
   
   // Relations
